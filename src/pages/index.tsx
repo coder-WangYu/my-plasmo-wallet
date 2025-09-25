@@ -315,62 +315,82 @@ const Index = () => {
 
       {/* 资产列表 */}
       <div className="flex-1 overflow-y-auto px-6 py-2">
-        {assets.map((asset, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between py-2 border-b border-gray-50 cursor-pointer">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold relative">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
-                  {asset.name}
+        {activeTab === "代币" ? (
+          assets.map((asset, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-between py-2 border-b border-gray-50 cursor-pointer">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold relative">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                    {asset.name}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <span className="text-xs">₿</span>
+                  </div>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <span className="text-xs">₿</span>
+                <div>
+                  <div className="font-medium text-gray-800">{asset.name}</div>
+                  <div className="text-sm text-gray-500">{asset.price}</div>
                 </div>
               </div>
-              <div>
-                <div className="font-medium text-gray-800">{asset.name}</div>
-                <div className="text-sm text-gray-500">{asset.price}</div>
+              <div className="text-right">
+                <div
+                  className={`text-sm font-medium ${
+                    asset.changeType === "down"
+                      ? "text-red-500"
+                      : asset.changeType === "up"
+                        ? "text-green-500"
+                        : "text-gray-500"
+                  }`}>
+                  {asset.change}
+                </div>
+                <div className="text-sm text-gray-500">{asset.amount}</div>
+                <div className="text-sm font-medium text-gray-800">
+                  {asset.value}
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div
-                className={`text-sm font-medium ${
-                  asset.changeType === "down"
-                    ? "text-red-500"
-                    : asset.changeType === "up"
-                      ? "text-green-500"
-                      : "text-gray-500"
-                }`}>
-                {asset.change}
-              </div>
-              <div className="text-sm text-gray-500">{asset.amount}</div>
-              <div className="text-sm font-medium text-gray-800">
-                {asset.value}
-              </div>
-            </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full py-20">
+            <svg
+              className="w-16 h-16 text-gray-300 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <div className="text-gray-500 text-sm">暂无数据</div>
           </div>
-        ))}
+        )}
       </div>
 
       {/* 底部浮动按钮 */}
-      <div className="py-3 px-10">
-        <button className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-            />
-          </svg>
-          <span>币种管理</span>
-        </button>
-      </div>
+      {activeTab === "代币" && (
+        <div className="py-3 px-10">
+          <button className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
+            </svg>
+            <span>币种管理</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
