@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 import "../style.css"
 
 const Index = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("代币")
   const [copied, setCopied] = useState(false)
   const [currentNetwork, setCurrentNetwork] = useState("Ethereum")
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false)
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const settingsDropdownRef = useRef<HTMLDivElement>(null)
 
   const walletAddress = "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
 
@@ -35,11 +39,59 @@ const Index = () => {
 
   const toggleNetworkDropdown = () => {
     setShowNetworkDropdown(!showNetworkDropdown)
+    setShowSettingsDropdown(false)
+  }
+
+  const toggleSettingsDropdown = () => {
+    setShowSettingsDropdown(!showSettingsDropdown)
+    setShowNetworkDropdown(false)
+  }
+
+  const handleSettingsSelect = (option: string) => {
+    setShowSettingsDropdown(false)
+    
+    switch (option) {
+      case "钱包管理":
+        navigate("/wallet-manager")
+        break
+      case "网络管理":
+        navigate("/network-manager")
+        break
+      case "更改密码":
+        console.log("跳转到更改密码页面")
+        break
+      default:
+        console.log(`选择了设置选项: ${option}`)
+    }
   }
 
   const handleWalletSwitch = () => {
     // TODO: 跳转到切换钱包页面
     console.log("跳转到切换钱包页面")
+  }
+
+  const handleSearch = () => {
+    navigate("/search")
+  }
+
+  const handleTokenManagement = () => {
+    navigate("/token-manager")
+  }
+
+  const handleSendToken = () => {
+    navigate("/send-token")
+  }
+
+  const handleReceiveToken = () => {
+    navigate("/receive-token")
+  }
+
+  const handleSwapToken = () => {
+    navigate("/swap-token")
+  }
+
+  const handleViewHistory = () => {
+    navigate("/view-history")
   }
 
   // 点击外部关闭下拉列表
@@ -51,16 +103,22 @@ const Index = () => {
       ) {
         setShowNetworkDropdown(false)
       }
+      if (
+        settingsDropdownRef.current &&
+        !settingsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowSettingsDropdown(false)
+      }
     }
 
-    if (showNetworkDropdown) {
+    if (showNetworkDropdown || showSettingsDropdown) {
       document.addEventListener("mousedown", handleClickOutside)
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
     }
-  }, [showNetworkDropdown])
+  }, [showNetworkDropdown, showSettingsDropdown])
 
   const assets = [
     {
@@ -159,6 +217,7 @@ const Index = () => {
         </div>
         <div className="flex items-center space-x-3">
           <button
+            onClick={handleSearch}
             className="p-1 rounded hover:bg-gray-100 transition-colors"
             title="搜索">
             <svg
@@ -174,28 +233,55 @@ const Index = () => {
               />
             </svg>
           </button>
-          <button
-            className="p-1 rounded hover:bg-gray-100 transition-colors"
-            title="设置">
-            <svg
-              className="w-5 h-5 text-gray-500 hover:text-blue-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-          </button>
+          <div className="relative" ref={settingsDropdownRef}>
+            <button
+              onClick={toggleSettingsDropdown}
+              className="p-1 rounded hover:bg-gray-100 transition-colors"
+              title="设置">
+              <svg
+                className="w-5 h-5 text-gray-500 hover:text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </button>
+
+            {/* 设置下拉列表 */}
+            {showSettingsDropdown && (
+              <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <div className="text-sm font-medium text-gray-700">设置</div>
+                </div>
+                <div className="py-2">
+                  {[
+                    { name: "钱包管理", icon: "👛" },
+                    { name: "网络管理", icon: "🌐" },
+                    { name: "更改密码", icon: "🔒" }
+                  ].map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSettingsSelect(option.name)}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 text-gray-700">
+                      <span className="text-base">{option.icon}</span>
+                      <span className="text-sm">{option.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={toggleNetworkDropdown}
@@ -265,23 +351,32 @@ const Index = () => {
 
       {/* 余额显示区域 */}
       <div className="px-4 py-1">
-        <div className="text-3xl font-bold text-gray-800">$110.25</div>
-        <div className="flex items-center space-x-2 text-sm mt-1">
-          <span className="text-red-500">-$0.01 (-0.00%) 1D</span>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-3xl font-bold text-gray-800">$110.25</div>
+            <div className="flex items-center space-x-2 text-sm mt-1">
+              <span className="text-red-500">-$0.01 (-0.00%) 1D</span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span className="text-sm font-medium text-gray-600">{currentNetwork}</span>
+          </div>
         </div>
       </div>
 
       {/* 操作按钮 */}
       <div className="flex justify-around px-6 py-2">
         {[
-          { name: "发送", icon: "↑" },
-          { name: "接收", icon: "↓" },
-          { name: "兑换", icon: "⇄" },
-          { name: "历史", icon: "📄" },
-          { name: "更多", icon: "⋯" }
+          { name: "发送", icon: "↑", onClick: handleSendToken },
+          { name: "接收", icon: "↓", onClick: handleReceiveToken },
+          { name: "兑换", icon: "⇄", onClick: handleSwapToken },
+          { name: "历史", icon: "📄", onClick: handleViewHistory },
+          { name: "更多", icon: "⋯", onClick: () => console.log("更多") }
         ].map((item, index) => (
           <button
             key={index}
+            onClick={item.onClick}
             className="flex flex-col items-center p-2 rounded-lg hover:bg-blue-50 hover:scale-105 transition-all duration-200 cursor-pointer group">
             <div className="w-12 h-12 bg-gray-100 group-hover:bg-blue-100 rounded-full flex items-center justify-center mb-2 transition-colors duration-200">
               <span className="text-lg group-hover:text-blue-600 transition-colors duration-200">
@@ -371,26 +466,28 @@ const Index = () => {
         )}
       </div>
 
-      {/* 底部浮动按钮 */}
-      {activeTab === "代币" && (
-        <div className="py-3 px-10">
-          <button className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
-            </svg>
-            <span>币种管理</span>
-          </button>
-        </div>
-      )}
+            {/* 底部浮动按钮 */}
+            {activeTab === "代币" && (
+              <div className="py-3 px-10">
+                <button 
+                  onClick={handleTokenManagement}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                  <span>币种管理</span>
+                </button>
+              </div>
+            )}
     </div>
   )
 }
