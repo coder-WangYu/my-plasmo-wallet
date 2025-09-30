@@ -6,11 +6,6 @@ import { AES, SHA256 } from "crypto-js"
 import type { WalletAccount } from "~types/wallet"
 import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
-interface walletStore extends WalletState {
-  createWallet: (password: string) => Promise<{ mnemonic: string, account: WalletAccount }>
-  importWallet: (mnemonic: string, password: string) => Promise<WalletAccount>
-}
-
 const initialState: WalletState = {
   isLocked: false,
   isConnected: false,
@@ -21,6 +16,12 @@ const initialState: WalletState = {
   currentNetwork: DEFAULT_NETWORKS[0],
   networks: DEFAULT_NETWORKS,
   tokens: []
+}
+
+interface walletStore extends WalletState {
+  createWallet: (password: string) => Promise<{ mnemonic: string, account: WalletAccount }>
+  importWallet: (mnemonic: string, password: string) => Promise<WalletAccount>
+  isValidPassword: (password: string) => boolean
 }
 
 export const useWalletStore = create<walletStore>()(
@@ -103,6 +104,13 @@ export const useWalletStore = create<walletStore>()(
         })
 
         return account
+      },
+
+      // 验证密码
+      isValidPassword: (password: string) => {
+        const state = get()
+        const hashedPassword = SHA256(password).toString()
+        return state.password === hashedPassword
       },
     }),
     {

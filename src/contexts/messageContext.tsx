@@ -119,7 +119,9 @@ export const MessageProvider: React.FC<MessageProviderProps> = ({ children }) =>
       {children}
       
       {/* 消息容器 */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
+      <div 
+        className="fixed top-4 right-4 space-y-2"
+        style={{ zIndex: 999999 }}>
         {messages.map((message) => (
           <div
             key={message.id}

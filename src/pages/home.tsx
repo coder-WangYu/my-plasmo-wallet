@@ -3,8 +3,13 @@ import { useNavigate } from "react-router-dom"
 
 import "../style.css"
 
+import { useMessage } from "~contexts/MessageContext"
+import { useWalletStore } from "~store"
+
 const Index = () => {
   const navigate = useNavigate()
+  const { isValidPassword, currentAccount, mnemonic } = useWalletStore()
+  const { error, warning } = useMessage()
   const [activeTab, setActiveTab] = useState("代币")
   const [copied, setCopied] = useState(false)
   const [currentNetwork, setCurrentNetwork] = useState("Ethereum")
@@ -56,7 +61,7 @@ const Index = () => {
 
   const handleSettingsSelect = (option: string) => {
     setShowSettingsDropdown(false)
-    
+
     switch (option) {
       case "钱包管理":
         navigate("/wallet-manager")
@@ -117,8 +122,8 @@ const Index = () => {
       setNestedDrawerTitle("私钥助记词")
       setShowNestedDrawer(true)
     } else {
-      setShowMoreDrawer(false)
-      console.log(`选择了账户详情操作: ${action}`)
+      // setShowMoreDrawer(false)
+      warning(`暂未开发的操作: ${action}`)
       // TODO: 实现具体功能
     }
   }
@@ -133,17 +138,15 @@ const Index = () => {
 
   const handleConfirmPassword = () => {
     if (password.trim()) {
-      // 模拟密码验证
-      if (password === "123456") {
+      if (isValidPassword(password)) {
         setIsPasswordVerified(true)
-        // 模拟获取敏感数据
         if (nestedDrawerTitle === "私钥") {
-          setSensitiveData("0x4bb583deafb42106dd333c83f65944b0a3a5b8294c81ae5601a4e155f34ab112")
+          setSensitiveData(currentAccount?.privateKey)
         } else if (nestedDrawerTitle === "私钥助记词") {
-          setSensitiveData("merry pioneer art hello foil earn pretty cave nothing fortune private stone")
+          setSensitiveData(mnemonic)
         }
       } else {
-        alert("密码错误，请重试")
+        error("密码错误，请重试")
       }
     }
   }
@@ -230,28 +233,30 @@ const Index = () => {
         <div className="flex items-start space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-orange-500 rounded-full"></div>
           <div className="flex-1">
-            <div className="text-sm font-medium px-2 text-gray-800">
-              DyWallet
+            <div className="text-sm font-medium text-gray-800">
+              {currentAccount?.name}
             </div>
-            <button
-              onClick={handleWalletSwitch}
-              className="text-xs text-gray-500 flex items-center hover:bg-gray-100 hover:text-gray-700 rounded px-2 py-1 transition-colors duration-200 cursor-pointer"
-              title="点击切换钱包">
+            <div className="text-xs text-gray-500 flex items-center">
               <span className="font-mono">
-                {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                {currentAccount.address.slice(0, 6)}...{currentAccount.address.slice(-4)}
               </span>
-              <svg
-                className="w-3 h-3 ml-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              <button
+                onClick={() => navigate("/wallet-manager")}
+                className="ml-1 p-1 rounded transition-colors cursor-pointer text-gray-400 hover:text-blue-500 hover:bg-blue-50"
+                title="切换钱包">
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
               <div
                 onClick={(e) => {
                   e.stopPropagation()
@@ -276,7 +281,7 @@ const Index = () => {
                   />
                 </svg>
               </div>
-            </button>
+            </div>
           </div>
         </div>
         <div className="flex items-center space-x-3">
@@ -424,7 +429,9 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span className="text-sm font-medium text-gray-600">{currentNetwork}</span>
+            <span className="text-sm font-medium text-gray-600">
+              {currentNetwork}
+            </span>
           </div>
         </div>
       </div>
@@ -530,35 +537,35 @@ const Index = () => {
         )}
       </div>
 
-            {/* 底部浮动按钮 */}
-            {activeTab === "代币" && (
-              <div className="py-3 px-10">
-                <button 
-                  onClick={handleTokenManagement}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                  <span>币种管理</span>
-                </button>
-              </div>
-            )}
+      {/* 底部浮动按钮 */}
+      {activeTab === "代币" && (
+        <div className="py-3 px-10">
+          <button
+            onClick={handleTokenManagement}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
+            </svg>
+            <span>币种管理</span>
+          </button>
+        </div>
+      )}
 
       {/* 账户详情抽屉 */}
       {showMoreDrawer && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-end"
           onClick={handleCloseMoreDrawer}>
-          <div 
+          <div
             className="w-full bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}>
             {/* 抽屉头部 */}
@@ -596,7 +603,9 @@ const Index = () => {
                 className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
                 <span className="text-sm text-gray-600">账户名称</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-800">test</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {currentAccount?.name}
+                  </span>
                   <svg
                     className="w-4 h-4 text-gray-500"
                     fill="none"
@@ -617,7 +626,10 @@ const Index = () => {
                 className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
                 <span className="text-sm text-gray-600">地址</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-800">0x2c583...b13ce</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {currentAccount.address.slice(0, 6)}...
+                    {currentAccount.address.slice(-4)}
+                  </span>
                   <svg
                     className="w-4 h-4 text-gray-500"
                     fill="none"
@@ -638,7 +650,9 @@ const Index = () => {
                 className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
                 <span className="text-sm text-gray-600">钱包</span>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-800">Wallet 1</span>
+                  <span className="text-sm font-medium text-gray-800">
+                    {currentAccount?.name}
+                  </span>
                   <svg
                     className="w-4 h-4 text-gray-500"
                     fill="none"
@@ -699,15 +713,17 @@ const Index = () => {
 
       {/* 嵌套抽屉 - 私钥/助记词 */}
       {showNestedDrawer && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-end"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-end"
           onClick={handleCloseNestedDrawer}>
-          <div 
+          <div
             className="w-full bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}>
             {/* 抽屉头部 */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-800">{nestedDrawerTitle}</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                {nestedDrawerTitle}
+              </h2>
               <button
                 onClick={handleCloseNestedDrawer}
                 className="p-1 rounded-full hover:bg-gray-100 transition-colors">
@@ -759,7 +775,9 @@ const Index = () => {
                     </svg>
                     <div>
                       <p className="text-sm text-red-700">
-                        警告:切勿泄露此{nestedDrawerTitle}。任何拥有您{nestedDrawerTitle}的人都可以窃取您账户中持有的任何资产。
+                        警告:切勿泄露此{nestedDrawerTitle}。任何拥有您
+                        {nestedDrawerTitle}
+                        的人都可以窃取您账户中持有的任何资产。
                       </p>
                     </div>
                   </div>
@@ -806,12 +824,30 @@ const Index = () => {
                           : "bg-blue-100 text-blue-600 hover:bg-blue-200"
                       }`}>
                       {copiedSensitive ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
                         </svg>
                       )}
                     </button>
@@ -835,7 +871,9 @@ const Index = () => {
                     </svg>
                     <div>
                       <p className="text-sm text-red-700">
-                        警告:切勿泄露此{nestedDrawerTitle}。任何拥有您{nestedDrawerTitle}的人都可以窃取您账户中持有的任何资产。
+                        警告:切勿泄露此{nestedDrawerTitle}。任何拥有您
+                        {nestedDrawerTitle}
+                        的人都可以窃取您账户中持有的任何资产。
                       </p>
                     </div>
                   </div>
