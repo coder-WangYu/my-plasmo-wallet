@@ -3,29 +3,27 @@ import { useNavigate } from "react-router-dom"
 
 import "../style.css"
 
+import { ethers } from "ethers"
+
 import { useLoading } from "~contexts/LoadingContext"
 import { useMessage } from "~contexts/MessageContext"
+import { useWalletStore } from "~store"
 
 import iconUrl from "../../assets/icon.png"
-import { useWalletStore } from "~store"
 
 const Sign = () => {
   const navigate = useNavigate()
-  const { importWallet } = useWalletStore()
+  const { createWallet, importWallet, importPrivateKey } = useWalletStore()
   const { setLoading } = useLoading()
   const { success, error } = useMessage()
-  const { createWallet } = useWalletStore()
-  const [activeTab, setActiveTab] = useState("创建钱包")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [mnemonic, setMnemonic] = useState("")
-  const [importPassword, setImportPassword] = useState("")
-  const [showImportPassword, setShowImportPassword] = useState(false)
   const [privateKey, setPrivateKey] = useState("")
-  const [privateKeyPassword, setPrivateKeyPassword] = useState("")
-  const [showPrivateKeyPassword, setShowPrivateKeyPassword] = useState(false)
+  const [mnemonic, setMnemonic] = useState("")
+  const [activeTab, setActiveTab] = useState("创建钱包")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showPrivateKey, setShowPrivateKey] = useState(false)
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
@@ -51,36 +49,42 @@ const Sign = () => {
   }
 
   const handleImportWallet = async () => {
-    if (mnemonic.trim() && importPassword.length >= 8) {
+    if (mnemonic.trim() && password.length >= 8) {
       try {
         setLoading(true, "正在导入钱包...")
-        await importWallet(mnemonic, importPassword)
+        await importWallet(mnemonic, password)
         success("钱包导入成功！")
+        navigate("/")
       } catch (err) {
         error("钱包导入失败，请检查助记词或密码！")
       } finally {
         setLoading(false)
       }
-      navigate("/")
     } else {
       error("助记词或密码验证失败！")
     }
   }
 
-  const handleImportPrivateKey = () => {
-    if (privateKey.trim() && privateKeyPassword.length >= 8) {
-      console.log("导入私钥", { privateKey, privateKeyPassword })
-      // TODO: 实际导入私钥逻辑
-      navigate("/")
+  const handleImportPrivateKey = async () => {
+    if (privateKey.trim() && password.length >= 8) {
+      try {
+        setLoading(true, "正在导入钱包...")
+        await importPrivateKey(privateKey, password)
+        success("钱包导入成功！")
+        navigate("/")
+      } catch (err) {
+        error("钱包导入失败，请检查私钥或密码！")
+      } finally {
+        setLoading(false)
+      }
     } else {
-      console.log("私钥或密码验证失败")
+      error("私钥或密码验证失败！")
     }
   }
 
   const isCreateFormValid = password.length >= 8 && password === confirmPassword
-  const isImportFormValid = mnemonic.trim() && importPassword.length >= 8
-  const isPrivateKeyFormValid =
-    privateKey.trim() && privateKeyPassword.length >= 8
+  const isImportFormValid = mnemonic.trim() && password.length >= 8
+  const isPrivateKeyFormValid = privateKey.trim() && password.length >= 8
 
   return (
     <div className="w-[400px] h-[600px] bg-white flex flex-col">
@@ -277,22 +281,22 @@ const Sign = () => {
               </label>
               <div className="relative">
                 <input
-                  type={showImportPassword ? "text" : "password"}
-                  value={importPassword}
-                  onChange={(e) => setImportPassword(e.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="输入密码(至少8位)"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowImportPassword(!showImportPassword)}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <svg
                     className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24">
-                    {showImportPassword ? (
+                    {showPassword ? (
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -341,13 +345,41 @@ const Sign = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 私钥
               </label>
-              <input
-                type="text"
-                value={privateKey}
-                onChange={(e) => setPrivateKey(e.target.value)}
-                placeholder="输入私钥 (0x开头的64位十六进制字符)"
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-              />
+              <div className="relative">
+                <input
+                  type={showPrivateKey ? "text" : "password"}
+                  value={privateKey}
+                  placeholder="输入私钥"
+                  onChange={(e) => setPrivateKey(e.target.value)}
+                  className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPrivateKey(!showPrivateKey)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    {showPrivateKey ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    )}
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* 密码设置 */}
@@ -357,24 +389,22 @@ const Sign = () => {
               </label>
               <div className="relative">
                 <input
-                  type={showPrivateKeyPassword ? "text" : "password"}
-                  value={privateKeyPassword}
-                  onChange={(e) => setPrivateKeyPassword(e.target.value)}
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="输入密码 (至少8位)"
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                 />
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPrivateKeyPassword(!showPrivateKeyPassword)
-                  }
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <svg
                     className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24">
-                    {showPrivateKeyPassword ? (
+                    {showPassword ? (
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"

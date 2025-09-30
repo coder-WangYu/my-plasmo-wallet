@@ -1,9 +1,11 @@
+import * as bip39 from "bip39"
+import { AES, SHA256 } from "crypto-js"
+import { ethers } from "ethers"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import * as bip39 from "bip39"
-import { ethers } from "ethers"
-import { AES, SHA256 } from "crypto-js"
+
 import type { WalletAccount } from "~types/wallet"
+
 import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
 const initialState: WalletState = {
@@ -19,16 +21,23 @@ const initialState: WalletState = {
 }
 
 interface walletStore extends WalletState {
-  createWallet: (password: string) => Promise<{ mnemonic: string, account: WalletAccount }>
+  createWallet: (
+    password: string
+  ) => Promise<{ mnemonic: string; account: WalletAccount }>
   importWallet: (mnemonic: string, password: string) => Promise<WalletAccount>
   isValidPassword: (password: string) => boolean
+  importPrivateKey: (
+    privateKey: string,
+    password: string,
+    name?: string
+  ) => Promise<WalletAccount>
 }
 
 export const useWalletStore = create<walletStore>()(
   persist(
     (set, get) => ({
       ...initialState,
-      
+
       // 创建钱包
       createWallet: async (password: string) => {
         // 生成助记词
@@ -106,12 +115,49 @@ export const useWalletStore = create<walletStore>()(
         return account
       },
 
+      // 导入私钥
+      importPrivateKey: async (
+        privateKey: string,
+        password: string,
+        name = "Private Account"
+      ) => {
+        try {
+          const wallet = new ethers.Wallet(privateKey)
+          const existingAccounts = get().accounts
+
+          const account: WalletAccount = {
+            address: wallet.address,
+            privateKey: wallet.privateKey,
+            name,
+            index: existingAccounts.length
+          }
+
+          const encryptedPrivateKey = AES.encrypt(
+            wallet.privateKey,
+            password
+          ).toString()
+
+          set((state) => ({
+            accounts: [
+              ...state.accounts,
+              { ...account, privateKey: encryptedPrivateKey }
+            ],
+            currentAccount: account,
+            password: state.password || SHA256(password).toString()
+          }))
+
+          return account
+        } catch (error) {
+          throw new Error("Invalid private key")
+        }
+      },
+
       // 验证密码
       isValidPassword: (password: string) => {
         const state = get()
         const hashedPassword = SHA256(password).toString()
         return state.password === hashedPassword
-      },
+      }
     }),
     {
       name: "wallet"
@@ -120,6 +166,6 @@ export const useWalletStore = create<walletStore>()(
 )
 
 // 开发环境暴露到 window
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  (window as any).walletStore = useWalletStore;
+if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+  ;(window as any).walletStore = useWalletStore
 }

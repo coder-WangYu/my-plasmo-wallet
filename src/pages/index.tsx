@@ -5,7 +5,6 @@ import Sign from "./sign"
 
 const Index = () => {
   const { isLocked, accounts } = useWalletStore()
-  console.log(isLocked, accounts)
   
   // 如果钱包被锁定，则显示登录页面
   if (isLocked) {
