@@ -10,6 +10,13 @@ const Index = () => {
   const [currentNetwork, setCurrentNetwork] = useState("Ethereum")
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false)
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false)
+  const [showMoreDrawer, setShowMoreDrawer] = useState(false)
+  const [showNestedDrawer, setShowNestedDrawer] = useState(false)
+  const [nestedDrawerTitle, setNestedDrawerTitle] = useState("")
+  const [password, setPassword] = useState("")
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false)
+  const [sensitiveData, setSensitiveData] = useState("")
+  const [copiedSensitive, setCopiedSensitive] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const settingsDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -92,6 +99,63 @@ const Index = () => {
 
   const handleViewHistory = () => {
     navigate("/view-history")
+  }
+
+  const handleMoreClick = () => {
+    setShowMoreDrawer(true)
+  }
+
+  const handleCloseMoreDrawer = () => {
+    setShowMoreDrawer(false)
+  }
+
+  const handleAccountDetailClick = (action: string) => {
+    if (action === "查看私钥") {
+      setNestedDrawerTitle("私钥")
+      setShowNestedDrawer(true)
+    } else if (action === "查看助记词") {
+      setNestedDrawerTitle("私钥助记词")
+      setShowNestedDrawer(true)
+    } else {
+      setShowMoreDrawer(false)
+      console.log(`选择了账户详情操作: ${action}`)
+      // TODO: 实现具体功能
+    }
+  }
+
+  const handleCloseNestedDrawer = () => {
+    setShowNestedDrawer(false)
+    setPassword("")
+    setIsPasswordVerified(false)
+    setSensitiveData("")
+    setCopiedSensitive(false)
+  }
+
+  const handleConfirmPassword = () => {
+    if (password.trim()) {
+      // 模拟密码验证
+      if (password === "123456") {
+        setIsPasswordVerified(true)
+        // 模拟获取敏感数据
+        if (nestedDrawerTitle === "私钥") {
+          setSensitiveData("0x4bb583deafb42106dd333c83f65944b0a3a5b8294c81ae5601a4e155f34ab112")
+        } else if (nestedDrawerTitle === "私钥助记词") {
+          setSensitiveData("merry pioneer art hello foil earn pretty cave nothing fortune private stone")
+        }
+      } else {
+        alert("密码错误，请重试")
+      }
+    }
+  }
+
+  const handleCopySensitiveData = async () => {
+    try {
+      await navigator.clipboard.writeText(sensitiveData)
+      setCopiedSensitive(true)
+      setTimeout(() => setCopiedSensitive(false), 2000)
+    } catch (err) {
+      console.error("复制失败:", err)
+    }
   }
 
   // 点击外部关闭下拉列表
@@ -372,7 +436,7 @@ const Index = () => {
           { name: "接收", icon: "↓", onClick: handleReceiveToken },
           { name: "兑换", icon: "⇄", onClick: handleSwapToken },
           { name: "历史", icon: "📄", onClick: handleViewHistory },
-          { name: "更多", icon: "⋯", onClick: () => console.log("更多") }
+          { name: "更多", icon: "⋯", onClick: handleMoreClick }
         ].map((item, index) => (
           <button
             key={index}
@@ -488,6 +552,308 @@ const Index = () => {
                 </button>
               </div>
             )}
+
+      {/* 账户详情抽屉 */}
+      {showMoreDrawer && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end"
+          onClick={handleCloseMoreDrawer}>
+          <div 
+            className="w-full bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}>
+            {/* 抽屉头部 */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-800">test</h2>
+              <button
+                onClick={handleCloseMoreDrawer}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+                <svg
+                  className="w-6 h-6 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* 用户头像 */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <span className="text-2xl text-white font-bold">T</span>
+              </div>
+            </div>
+
+            {/* 账户信息列表 */}
+            <div className="space-y-1 mb-6">
+              <button
+                onClick={() => handleAccountDetailClick("编辑账户名称")}
+                className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <span className="text-sm text-gray-600">账户名称</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-800">test</span>
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleAccountDetailClick("查看地址详情")}
+                className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <span className="text-sm text-gray-600">地址</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-800">0x2c583...b13ce</span>
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleAccountDetailClick("钱包详情")}
+                className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <span className="text-sm text-gray-600">钱包</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-800">Wallet 1</span>
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
+
+            {/* 安全选项 */}
+            <div className="space-y-1">
+              <button
+                onClick={() => handleAccountDetailClick("查看助记词")}
+                className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <span className="text-sm text-gray-600">私钥助记词</span>
+                <svg
+                  className="w-4 h-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+
+              <button
+                onClick={() => handleAccountDetailClick("查看私钥")}
+                className="w-full flex items-center justify-between py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
+                <span className="text-sm text-gray-600">私钥</span>
+                <svg
+                  className="w-4 h-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 嵌套抽屉 - 私钥/助记词 */}
+      {showNestedDrawer && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-end"
+          onClick={handleCloseNestedDrawer}>
+          <div 
+            className="w-full bg-white rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}>
+            {/* 抽屉头部 */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-800">{nestedDrawerTitle}</h2>
+              <button
+                onClick={handleCloseNestedDrawer}
+                className="p-1 rounded-full hover:bg-gray-100 transition-colors">
+                <svg
+                  className="w-6 h-6 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {!isPasswordVerified ? (
+              <>
+                {/* 密码输入区域 */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    输入您的密码
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="密码"
+                    className="w-full px-3 py-2 border border-blue-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+                  />
+                </div>
+
+                {/* 警告提示 */}
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                  <div className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-red-700">
+                        警告:切勿泄露此{nestedDrawerTitle}。任何拥有您{nestedDrawerTitle}的人都可以窃取您账户中持有的任何资产。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 按钮区域 */}
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCloseNestedDrawer}
+                    className="flex-1 py-3 px-4 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors">
+                    取消
+                  </button>
+                  <button
+                    onClick={handleConfirmPassword}
+                    disabled={!password.trim()}
+                    className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
+                      password.trim()
+                        ? "bg-gray-600 text-white hover:bg-gray-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}>
+                    确认
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 敏感数据显示区域 */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {nestedDrawerTitle}
+                  </label>
+                  <div className="relative">
+                    <textarea
+                      value={sensitiveData}
+                      readOnly
+                      rows={nestedDrawerTitle === "私钥助记词" ? 3 : 2}
+                      className="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 resize-none"
+                    />
+                    <button
+                      onClick={handleCopySensitiveData}
+                      className={`absolute top-2 right-2 p-2 rounded-lg transition-colors ${
+                        copiedSensitive
+                          ? "bg-green-100 text-green-600"
+                          : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                      }`}>
+                      {copiedSensitive ? (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 警告提示 */}
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+                  <div className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-red-400 mt-0.5 mr-3 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-red-700">
+                        警告:切勿泄露此{nestedDrawerTitle}。任何拥有您{nestedDrawerTitle}的人都可以窃取您账户中持有的任何资产。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 按钮区域 */}
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleCloseNestedDrawer}
+                    className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    关闭
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
