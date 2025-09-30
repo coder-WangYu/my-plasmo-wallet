@@ -6,6 +6,7 @@ import { MessageProvider } from "~contexts/MessageContext"
 import AddToken from "./components/addToken"
 import NetworkManager from "./components/networkManager"
 import ReceiveToken from "./components/receiveToken"
+import SaveMnemonic from "./components/saveMnemonic"
 import Search from "./components/search"
 import SendToken from "./components/sendToken"
 import SwapToken from "./components/swapToken"
@@ -30,6 +31,7 @@ function IndexPopup() {
             <Route path="/receive-token" element={<ReceiveToken />} />
             <Route path="/swap-token" element={<SwapToken />} />
             <Route path="/view-history" element={<ViewHistory />} />
+            <Route path="/mnemonic" element={<SaveMnemonic />} />
           </Routes>
         </MemoryRouter>
       </MessageProvider>

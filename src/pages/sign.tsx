@@ -7,11 +7,13 @@ import { useLoading } from "~contexts/LoadingContext"
 import { useMessage } from "~contexts/MessageContext"
 
 import iconUrl from "../../assets/icon.png"
+import { useWalletStore } from "~store"
 
 const Sign = () => {
   const navigate = useNavigate()
   const { setLoading } = useLoading()
   const { success, error } = useMessage()
+  const { createWallet } = useWalletStore()
   const [activeTab, setActiveTab] = useState("创建钱包")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -33,16 +35,11 @@ const Sign = () => {
       try {
         setLoading(true, "正在创建钱包...")
 
-        // 模拟创建钱包的异步操作
-        await new Promise((resolve) => setTimeout(resolve, 2000))
+        const { mnemonic } = await createWallet(password)
 
-        console.log("创建钱包", { password })
-        // TODO: 实际创建钱包逻辑
-
-        success("钱包创建成功！")
-        navigate("/")
+        success("钱包创建成功，请先保管助记词！")
+        navigate("/mnemonic", { state: { mnemonic } })
       } catch (err) {
-        console.error("创建钱包失败:", err)
         error("钱包创建失败，请重试")
       } finally {
         setLoading(false)
