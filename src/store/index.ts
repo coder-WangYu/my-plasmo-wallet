@@ -8,6 +8,7 @@ import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
 interface walletStore extends WalletState {
   createWallet: (password: string) => Promise<{ mnemonic: string, account: WalletAccount }>
+  importWallet: (mnemonic: string, password: string) => Promise<WalletAccount>
 }
 
 const initialState: WalletState = {
@@ -67,6 +68,41 @@ export const useWalletStore = create<walletStore>()(
         })
 
         return { mnemonic, account }
+      },
+
+      // 导入助记词
+      importWallet: async (mnemonic: string, password: string) => {
+        if (!bip39.validateMnemonic(mnemonic)) {
+          throw new Error("Invalid mnemonic phrase")
+        }
+
+        const seedBuffer = await bip39.mnemonicToSeed(mnemonic)
+        const seed = new Uint8Array(seedBuffer)
+        const hdNode = ethers.HDNodeWallet.fromSeed(seed)
+        const wallet = hdNode.derivePath("m/44'/60'/0'/0/0")
+
+        const account: WalletAccount = {
+          address: wallet.address,
+          privateKey: wallet.privateKey,
+          name: "Account 1",
+          index: 0
+        }
+
+        const encryptedMnemonic = AES.encrypt(mnemonic, password).toString()
+        const encryptedPrivateKey = AES.encrypt(
+          wallet.privateKey,
+          password
+        ).toString()
+
+        set({
+          isLocked: false,
+          accounts: [{ ...account, privateKey: encryptedPrivateKey }],
+          currentAccount: account,
+          mnemonic: encryptedMnemonic,
+          password: SHA256(password).toString()
+        })
+
+        return account
       },
     }),
     {

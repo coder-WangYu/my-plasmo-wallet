@@ -11,6 +11,7 @@ import { useWalletStore } from "~store"
 
 const Sign = () => {
   const navigate = useNavigate()
+  const { importWallet } = useWalletStore()
   const { setLoading } = useLoading()
   const { success, error } = useMessage()
   const { createWallet } = useWalletStore()
@@ -49,13 +50,20 @@ const Sign = () => {
     }
   }
 
-  const handleImportWallet = () => {
+  const handleImportWallet = async () => {
     if (mnemonic.trim() && importPassword.length >= 8) {
-      console.log("导入钱包", { mnemonic, importPassword })
-      // TODO: 实际导入钱包逻辑
+      try {
+        setLoading(true, "正在导入钱包...")
+        await importWallet(mnemonic, importPassword)
+        success("钱包导入成功！")
+      } catch (err) {
+        error("钱包导入失败，请检查助记词或密码！")
+      } finally {
+        setLoading(false)
+      }
       navigate("/")
     } else {
-      console.log("助记词或密码验证失败")
+      error("助记词或密码验证失败！")
     }
   }
 
