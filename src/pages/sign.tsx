@@ -1,10 +1,17 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+
 import "../style.css"
+
+import { useLoading } from "~contexts/LoadingContext"
+import { useMessage } from "~contexts/MessageContext"
+
 import iconUrl from "../../assets/icon.png"
 
 const Sign = () => {
   const navigate = useNavigate()
+  const { setLoading } = useLoading()
+  const { success, error } = useMessage()
   const [activeTab, setActiveTab] = useState("创建钱包")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -21,13 +28,27 @@ const Sign = () => {
     setActiveTab(tab)
   }
 
-  const handleCreateWallet = () => {
+  const handleCreateWallet = async () => {
     if (password.length >= 8 && password === confirmPassword) {
-      console.log("创建钱包", { password })
-      // TODO: 实际创建钱包逻辑
-      navigate("/")
+      try {
+        setLoading(true, "正在创建钱包...")
+
+        // 模拟创建钱包的异步操作
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+
+        console.log("创建钱包", { password })
+        // TODO: 实际创建钱包逻辑
+
+        success("钱包创建成功！")
+        navigate("/")
+      } catch (err) {
+        console.error("创建钱包失败:", err)
+        error("钱包创建失败，请重试")
+      } finally {
+        setLoading(false)
+      }
     } else {
-      console.log("密码验证失败")
+      error("密码长度至少8位且两次输入必须一致")
     }
   }
 
@@ -53,7 +74,8 @@ const Sign = () => {
 
   const isCreateFormValid = password.length >= 8 && password === confirmPassword
   const isImportFormValid = mnemonic.trim() && importPassword.length >= 8
-  const isPrivateKeyFormValid = privateKey.trim() && privateKeyPassword.length >= 8
+  const isPrivateKeyFormValid =
+    privateKey.trim() && privateKeyPassword.length >= 8
 
   return (
     <div className="w-[400px] h-[600px] bg-white flex flex-col">
@@ -110,7 +132,9 @@ const Sign = () => {
                   d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
                 />
               </svg>
-              <h2 className="text-lg font-semibold text-gray-800">创建新钱包</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                创建新钱包
+              </h2>
             </div>
 
             {/* 描述文字 */}
@@ -225,9 +249,7 @@ const Sign = () => {
             </div>
 
             {/* 描述文字 */}
-            <p className="text-gray-600 text-sm">
-              使用现有的助记词导入钱包
-            </p>
+            <p className="text-gray-600 text-sm">使用现有的助记词导入钱包</p>
 
             {/* 助记词输入 */}
             <div>
@@ -307,9 +329,7 @@ const Sign = () => {
             </div>
 
             {/* 描述文字 */}
-            <p className="text-gray-600 text-sm">
-              使用私钥导入账户
-            </p>
+            <p className="text-gray-600 text-sm">使用私钥导入账户</p>
 
             {/* 私钥输入 */}
             <div>
@@ -340,7 +360,9 @@ const Sign = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPrivateKeyPassword(!showPrivateKeyPassword)}
+                  onClick={() =>
+                    setShowPrivateKeyPassword(!showPrivateKeyPassword)
+                  }
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   <svg
                     className="w-5 h-5"
@@ -384,7 +406,7 @@ const Sign = () => {
             创建钱包
           </button>
         )}
-        
+
         {activeTab === "导入助记词" && (
           <button
             onClick={handleImportWallet}
@@ -397,7 +419,7 @@ const Sign = () => {
             导入钱包
           </button>
         )}
-        
+
         {activeTab === "导入私钥" && (
           <button
             onClick={handleImportPrivateKey}
