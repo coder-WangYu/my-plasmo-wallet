@@ -3,13 +3,12 @@ import { useNavigate } from "react-router-dom"
 
 import "../style.css"
 
-import { ethers } from "ethers"
-
 import { useLoading } from "~contexts/LoadingContext"
 import { useMessage } from "~contexts/MessageContext"
 import { useWalletStore } from "~store"
 
 import iconUrl from "../../assets/icon.png"
+import { ethers } from "ethers"
 
 const Sign = () => {
   const navigate = useNavigate()
@@ -27,15 +26,20 @@ const Sign = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
+    // 切换标签页时清空密码相关字段
+    setPassword("")
+    setConfirmPassword("")
+    setShowPassword(false)
+    setShowConfirmPassword(false)
+    setShowPrivateKey(false)
   }
 
   const handleCreateWallet = async () => {
     if (password.length >= 8 && password === confirmPassword) {
+      setLoading(true, "正在创建钱包...")
+
       try {
-        setLoading(true, "正在创建钱包...")
-
         const { mnemonic } = await createWallet(password)
-
         success("钱包创建成功，请先保管助记词！")
         navigate("/mnemonic", { state: { mnemonic } })
       } catch (err) {
@@ -50,8 +54,9 @@ const Sign = () => {
 
   const handleImportWallet = async () => {
     if (mnemonic.trim() && password.length >= 8) {
+      setLoading(true, "正在导入助记词...")
+
       try {
-        setLoading(true, "正在导入钱包...")
         await importWallet(mnemonic, password)
         success("钱包导入成功！")
         navigate("/")
@@ -67,8 +72,16 @@ const Sign = () => {
 
   const handleImportPrivateKey = async () => {
     if (privateKey.trim() && password.length >= 8) {
+      setLoading(true, "正在导入私钥...")
+
+      // 解决BUG：导入私钥时，ethers.Wallet 报错
+      // ethers 模块可能使用了懒加载或按需加载机制
+      // 需要确保在导入私钥前，ethers 模块已经加载完成
+      // 解决方案：在导入私钥前，先加载 ethers 模块
+      // console.log(ethers) 之所以能"修复"问题，是因为它强制触发了 ethers 模块的完整初始化，而不是因为打印本身
+      console.log(ethers)
+      // ========================
       try {
-        setLoading(true, "正在导入钱包...")
         await importPrivateKey(privateKey, password)
         success("钱包导入成功！")
         navigate("/")

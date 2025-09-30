@@ -86,9 +86,9 @@ export const useWalletStore = create<walletStore>()(
           throw new Error("Invalid mnemonic phrase")
         }
 
-        const seedBuffer = await bip39.mnemonicToSeed(mnemonic)
+        const seedBuffer = await bip39.mnemonicToSeed(mnemonic) // await
         const seed = new Uint8Array(seedBuffer)
-        const hdNode = ethers.HDNodeWallet.fromSeed(seed)
+        const hdNode = ethers.HDNodeWallet.fromSeed(seed) // 这里能访问到是因为前面的await
         const wallet = hdNode.derivePath("m/44'/60'/0'/0/0")
 
         const account: WalletAccount = {
@@ -122,6 +122,7 @@ export const useWalletStore = create<walletStore>()(
         name = "Private Account"
       ) => {
         try {
+          // console.log(ethers) 这里确实访问不到ethers模块
           const wallet = new ethers.Wallet(privateKey)
           const existingAccounts = get().accounts
 
