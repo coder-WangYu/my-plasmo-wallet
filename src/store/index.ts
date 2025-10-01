@@ -187,7 +187,9 @@ export const useWalletStore = create<walletStore>()(
           throw new Error("Invalid password")
         }
         set({ isLocked: false })
-      }
+      },
+
+      
     }),
     {
       name: "wallet"
