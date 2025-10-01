@@ -31,6 +31,7 @@ interface walletStore extends WalletState {
     password: string,
     name?: string
   ) => Promise<WalletAccount>
+  getProvider: () => ethers.JsonRpcProvider | null
 }
 
 export const useWalletStore = create<walletStore>()(
@@ -158,7 +159,18 @@ export const useWalletStore = create<walletStore>()(
         const state = get()
         const hashedPassword = SHA256(password).toString()
         return state.password === hashedPassword
-      }
+      },
+
+      // 创建provider
+      getProvider: () => {
+        const state = get()
+        try {
+          return new ethers.JsonRpcProvider(state.currentNetwork.rpcUrl)
+        } catch (error) {
+          console.error("Failed to create provider:", error)
+          return null
+        }
+      },
     }),
     {
       name: "wallet"

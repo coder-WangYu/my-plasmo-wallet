@@ -42,33 +42,17 @@ export const DEFAULT_NETWORKS: Network[] = [
   {
     id: 'sepolia',
     name: 'Ethereum Sepolia Testnet',
-    rpcUrl: 'https://eth-sepolia.g.alchemy.com/v2/Hqd_61uGu4Xbq16eZ2j5N',
+    rpcUrl: 'https://sepolia.infura.io/v3/bd53db44b045458e827701c6bc02a161',
     chainId: 11155111,
     symbol: 'ETH',
     blockExplorerUrl: 'https://sepolia.etherscan.io'
   },
   {
-    id: 'ethereum',
+    id: 'sepolia',
     name: 'Ethereum Mainnet',
-    rpcUrl: 'https://eth-mainnet.g.alchemy.com/v2/Hqd_61uGu4Xbq16eZ2j5N',
-    chainId: 1,
+    rpcUrl: 'https://mainnet.infura.io/v3/bd53db44b045458e827701c6bc02a161',
+    chainId: 11155111,
     symbol: 'ETH',
-    blockExplorerUrl: 'https://etherscan.io'
+    blockExplorerUrl: 'https://sepolia.etherscan.io'
   },
-  {
-    id: 'polygon',
-    name: 'Polygon Mainnet',
-    rpcUrl: 'https://polygon-mainnet.g.alchemy.com/v2/Hqd_61uGu4Xbq16eZ2j5N',
-    chainId: 137,
-    symbol: 'POL',
-    blockExplorerUrl: 'https://polygonscan.com'
-  },
-  {
-    id: 'polygon-amoy',
-    name: 'Polygon Amoy Testnet',
-    rpcUrl: 'https://polygon-amoy.g.alchemy.com/v2/Hqd_61uGu4Xbq16eZ2j5N',
-    chainId: 80002,
-    symbol: 'POL',
-    blockExplorerUrl: 'https://www.oklink.com/amoy'
-  }
 ];

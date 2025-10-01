@@ -5,11 +5,13 @@ import "../style.css"
 
 import { useMessage } from "~contexts/MessageContext"
 import { useWalletStore } from "~store"
+import { useGetBalance } from "~hooks/useGetBalance"
 
 const Index = () => {
   const navigate = useNavigate()
   const { isValidPassword, currentAccount, mnemonic } = useWalletStore()
   const { error, warning } = useMessage()
+  const { ethBalance } = useGetBalance()
   const [activeTab, setActiveTab] = useState("代币")
   const [copied, setCopied] = useState(false)
   const [currentNetwork, setCurrentNetwork] = useState("Ethereum")
@@ -196,33 +198,6 @@ const Index = () => {
       changeType: "down",
       amount: "40.93",
       value: "$110.25"
-    },
-    {
-      name: "USDT",
-      icon: "🟢",
-      price: "$0.9869",
-      change: "0.00%",
-      changeType: "neutral",
-      amount: "0",
-      value: "$0.00"
-    },
-    {
-      name: "ETH",
-      icon: "🔵",
-      price: "$4,059.67",
-      change: "-3.14%",
-      changeType: "down",
-      amount: "0",
-      value: "$0.00"
-    },
-    {
-      name: "BNB",
-      icon: "🟡",
-      price: "$1,196.06",
-      change: "-2.45%",
-      changeType: "down",
-      amount: "0",
-      value: "$0.00"
     }
   ]
 
@@ -422,7 +397,17 @@ const Index = () => {
       <div className="px-4 py-1">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-3xl font-bold text-gray-800">$110.25</div>
+            <div className="text-3xl font-bold text-gray-800 flex items-baseline">
+              {ethBalance.split("").map((char, index) => (
+                <span
+                  key={index}
+                  className="animate-fade-in-up inline-block"
+                  style={{ animationDelay: `${index * 0.05}s` }}>
+                  {char}
+                </span>
+              ))}
+              <span className="ml-1">ETH</span>
+            </div>
             <div className="flex items-center space-x-2 text-sm mt-1">
               <span className="text-red-500">-$0.01 (-0.00%) 1D</span>
             </div>
