@@ -40,12 +40,12 @@ export interface WalletState {
 // 默认网络
 export const DEFAULT_NETWORKS: Network[] = [
   {
-    id: 'sepolia',
+    id: 'mainnet',
     name: 'Ethereum Sepolia Testnet',
     rpcUrl: 'https://sepolia.infura.io/v3/bd53db44b045458e827701c6bc02a161',
     chainId: 11155111,
     symbol: 'ETH',
-    blockExplorerUrl: 'https://sepolia.etherscan.io'
+    blockExplorerUrl: 'https://sepolia.etherscan.io',
   },
   {
     id: 'sepolia',
@@ -53,6 +53,19 @@ export const DEFAULT_NETWORKS: Network[] = [
     rpcUrl: 'https://mainnet.infura.io/v3/bd53db44b045458e827701c6bc02a161',
     chainId: 11155111,
     symbol: 'ETH',
-    blockExplorerUrl: 'https://sepolia.etherscan.io'
+    blockExplorerUrl: 'https://sepolia.etherscan.io',
   },
 ];
+
+export const ERC20_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function balanceOf(address owner) view returns (uint256)"
+]
+
+export const ERC721_ABI = [
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function tokenURI(uint256 tokenId) view returns (string)"
+]

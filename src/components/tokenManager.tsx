@@ -1,10 +1,28 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+
 import "../style.css"
+
+import { useMessage } from "~contexts/MessageContext"
+import { useGetBalance } from "~hooks/useGetBalance"
+import { useWalletStore } from "~store"
+import type { Token } from "~types/wallet"
+import { useLoading } from "~contexts/LoadingContext"
 
 const TokenManager = () => {
   const navigate = useNavigate()
+  const { tokens, removeToken } = useWalletStore()
+  const { setLoading } = useLoading()
+  const { error, success } = useMessage()
+  const { getTokenBalance, getAllTokenBalance, refreshBalance } =
+    useGetBalance()
   const [searchQuery, setSearchQuery] = useState("")
+  const [isTokensExpanded, setIsTokensExpanded] = useState(true)
+  const [isNFTsExpanded, setIsNFTsExpanded] = useState(true)
+  const [addedTokens, setAddedTokens] = useState<Token[]>([])
+  const [addedNFTs, setAddedNFTs] = useState<Token[]>([])
+  const [refreshingToken, setRefreshingToken] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const handleBack = () => {
     navigate(-1)
@@ -14,63 +32,56 @@ const TokenManager = () => {
     navigate("/add-token")
   }
 
-  const handleRemoveToken = (tokenName: string) => {
-    console.log(`移除代币: ${tokenName}`)
+  const handleRemoveToken = async (
+    tokenSymbol: string,
+    tokenAddress: string
+  ) => {
+    setLoading(true, "正在移除代币...")
+    try {
+      await removeToken(tokenAddress)
+      success(`${tokenSymbol}已被移除！`)
+      await refreshBalance()
+    } catch {
+      error("移除失败...")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleAddPopularToken = (tokenName: string) => {
-    console.log(`添加热门代币: ${tokenName}`)
+  const handleRefreshToken = async (tokenAddress: string) => {
+    if (refreshingToken) return // 防止重复点击
+
+    setRefreshingToken(tokenAddress)
+    try {
+      const token = tokens.find((t) => t.address === tokenAddress)
+      if (!token) return
+
+      await getTokenBalance(token)
+    } catch {
+      error("刷新余额失败...")
+    } finally {
+      setRefreshingToken(null)
+    }
   }
 
-  const addedTokens = [
-    {
-      name: "OCB",
-      icon: "🟣",
-      description: "0x3ec451...2947300a",
-      hasBitcoinOverlay: true
-    },
-    {
-      name: "USDT",
-      icon: "🟢",
-      description: "Tether USD",
-      hasBitcoinOverlay: true
-    },
-    {
-      name: "ETH",
-      icon: "🔵",
-      description: "Ethereum",
-      hasBitcoinOverlay: true
-    },
-    {
-      name: "BNB",
-      icon: "⚫",
-      description: "BNB",
-      hasBitcoinOverlay: true
-    }
-  ]
-
-  const popularTokens = [
-    {
-      name: "GT",
-      icon: "🔵",
-      description: "GateToken"
-    },
-    {
-      name: "WLD",
-      icon: "⚪",
-      description: "0x163f8c...60318753"
-    }
-  ]
-
-  const filteredAddedTokens = addedTokens.filter(token =>
-    token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    token.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAddedTokens = addedTokens.filter((token) =>
+    token.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const filteredPopularTokens = popularTokens.filter(token =>
-    token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    token.description.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAddedNFTs = addedNFTs.filter((nft) =>
+    nft.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  useEffect(() => {
+    setAddedTokens(tokens.filter((token) => token.type === "ERC20"))
+    setAddedNFTs(tokens.filter((token) => token.type === "ERC721"))
+
+    // 只在初始化时调用 getAllTokenBalance
+    if (!isInitialized && tokens.length > 0) {
+      getAllTokenBalance()
+      setIsInitialized(true)
+    }
+  }, [tokens])
 
   return (
     <div className="w-[400px] h-[600px] bg-white flex flex-col">
@@ -92,7 +103,9 @@ const TokenManager = () => {
             />
           </svg>
         </button>
-        <h1 className="flex-1 text-center text-lg font-semibold text-gray-800">币种管理</h1>
+        <h1 className="flex-1 text-center text-lg font-semibold text-gray-800">
+          币种管理
+        </h1>
         <button className="p-1 rounded hover:bg-gray-100 transition-colors">
           <svg
             className="w-6 h-6 text-gray-600"
@@ -157,83 +170,195 @@ const TokenManager = () => {
           </svg>
         </div>
 
-        {/* 已添加币种 */}
+        {/* 已添加代币 */}
         <div className="py-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">已添加币种</h2>
-          {filteredAddedTokens.map((token, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between py-3 border-b border-gray-50">
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                    {token.icon}
-                  </div>
-                  {token.hasBitcoinOverlay && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <span className="text-xs">₿</span>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-900">已添加代币</h2>
+            <button
+              onClick={() => setIsTokensExpanded(!isTokensExpanded)}
+              className="p-1 rounded hover:bg-gray-100 transition-colors">
+              <svg
+                className={`w-5 h-5 text-gray-600 transition-transform ${
+                  isTokensExpanded ? "" : "rotate-180"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
+            </button>
+          </div>
+          {isTokensExpanded &&
+            filteredAddedTokens.map((token, index) => (
+              <div
+                key={index}
+                className="relative flex items-center justify-between py-3 border-b border-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                      🟣
                     </div>
-                  )}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-800">
+                      {token.symbol}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {token.address.slice(0, 6)}...{token.address.slice(-4)}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-800">{token.name}</div>
-                  <div className="text-sm text-gray-500">{token.description}</div>
+                <div className="flex items-center space-x-3">
+                  <div className="text-right mr-2">
+                    <div className="text-sm font-medium text-gray-800">
+                      {token.balance || "0.00"}
+                    </div>
+                    <div className="text-xs text-gray-500">$0.00</div>
+                  </div>
+                  <button
+                    onClick={() => handleRefreshToken(token.address)}
+                    disabled={refreshingToken === token.address}
+                    className="p-1.5 rounded hover:bg-blue-50 transition-colors disabled:opacity-50 group">
+                    <svg
+                      className={`w-4 h-4 text-gray-500 group-hover:text-blue-600 transition-colors ${refreshingToken === token.address ? "animate-spin" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleRemoveToken(token.symbol, token.address)
+                    }
+                    disabled={refreshingToken === token.address}
+                    className="p-1.5 rounded hover:bg-red-50 transition-colors disabled:opacity-50 group">
+                    <svg
+                      className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
                 </div>
+
+                {/* 加载遮罩层 - 刷新 */}
+                {refreshingToken === token.address && (
+                  <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+
               </div>
-              <button
-                onClick={() => handleRemoveToken(token.name)}
-                className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 12H4"
-                  />
-                </svg>
-              </button>
-            </div>
-          ))}
+            ))}
         </div>
 
-        {/* 热门代币 */}
+        {/* 已添加NFT */}
         <div className="py-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">热门代币</h2>
-          {filteredPopularTokens.map((token, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between py-3 border-b border-gray-50">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
-                  {token.icon}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-900">已添加NFT</h2>
+            <button
+              onClick={() => setIsNFTsExpanded(!isNFTsExpanded)}
+              className="p-1 rounded hover:bg-gray-100 transition-colors">
+              <svg
+                className={`w-5 h-5 text-gray-600 transition-transform ${
+                  isNFTsExpanded ? "" : "rotate-180"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
+            </button>
+          </div>
+          {isNFTsExpanded &&
+            filteredAddedNFTs.map((nft, index) => (
+              <div
+                key={index}
+                className="relative flex items-center justify-between py-3 border-b border-gray-50">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                    🦧
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-800">
+                      {nft.symbol}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {nft.address.slice(0, 6)}...{nft.address.slice(-4)}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-800">{token.name}</div>
-                  <div className="text-sm text-gray-500">{token.description}</div>
+                <div className="flex items-center space-x-3">
+                  <div className="text-right mr-2">
+                    <div className="text-sm font-medium text-gray-800">--</div>
+                    <div className="text-xs text-gray-500">NFT</div>
+                  </div>
+                  <button
+                    onClick={() => handleRefreshToken(nft.address)}
+                    disabled={refreshingToken === nft.address}
+                    className="p-1.5 rounded hover:bg-blue-50 transition-colors disabled:opacity-50 group">
+                    <svg
+                      className={`w-4 h-4 text-gray-500 group-hover:text-blue-600 transition-colors ${refreshingToken === nft.address ? "animate-spin" : ""}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleRemoveToken(nft.symbol, nft.address)}
+                    disabled={refreshingToken === nft.address}
+                    className="p-1.5 rounded hover:bg-red-50 transition-colors disabled:opacity-50 group">
+                    <svg
+                      className="w-4 h-4 text-gray-500 group-hover:text-red-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
                 </div>
+
+                {/* 加载遮罩层 - 刷新 */}
+                {refreshingToken === nft.address && (
+                  <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => handleAddPopularToken(token.name)}
-                className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-              </button>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>

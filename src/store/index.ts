@@ -4,7 +4,7 @@ import { ethers } from "ethers"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-import type { WalletAccount } from "~types/wallet"
+import type { Token, WalletAccount } from "~types/wallet"
 
 import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
@@ -34,6 +34,10 @@ interface walletStore extends WalletState {
   getProvider: () => ethers.JsonRpcProvider | null
   lockWallet: () => void
   unlockWallet: (password: string) => void
+  switchNetwork: (networkName: string) => void
+  addToken: (token: Token) => void
+  removeToken: (address: string) => void
+  updateTokenBalance: (address: string, balance: string) => void
 }
 
 export const useWalletStore = create<walletStore>()(
@@ -189,7 +193,40 @@ export const useWalletStore = create<walletStore>()(
         set({ isLocked: false })
       },
 
-      
+      // 切换网络
+      switchNetwork: (networkName: string) => {
+        const state = get()
+        const network = state.networks.find((network) => network.name === networkName)
+        if (network) {
+          set({ currentNetwork: network })
+        }
+      },
+
+      // 添加代币
+      addToken: (token: Token) => {
+        set((state) => ({
+          tokens: [
+            ...state.tokens.filter((t) => t.address !== token.address),
+            token
+          ]
+        }))
+      },
+
+      // 删除代币
+      removeToken: (address: string) => {
+        set((state) => ({
+          tokens: state.tokens.filter((token) => token.address !== address)
+        }))
+      },
+
+      // 更新代币余额
+      updateTokenBalance: (address: string, balance: string) => {
+        set((state) => ({
+          tokens: state.tokens.map((token) =>
+            token.address === address ? { ...token, balance } : token
+          )
+        }))
+      },
     }),
     {
       name: "wallet"
