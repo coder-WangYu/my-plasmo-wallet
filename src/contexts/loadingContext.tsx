@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 interface LoadingContextType {
   isLoading: boolean;
   loadingText: string;
-  setLoading: (loading: boolean, text?: string, delay?: number) => void;
+  setLoading: (loading: boolean, text?: string) => void;
 }
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
