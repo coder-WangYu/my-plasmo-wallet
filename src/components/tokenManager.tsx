@@ -19,10 +19,10 @@ const TokenManager = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const [isTokensExpanded, setIsTokensExpanded] = useState(true)
   const [isNFTsExpanded, setIsNFTsExpanded] = useState(true)
-  const [addedTokens, setAddedTokens] = useState<Token[]>([])
-  const [addedNFTs, setAddedNFTs] = useState<Token[]>([])
   const [refreshingToken, setRefreshingToken] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [addedTokens, setAddedTokens] = useState<Token[]>([])
+  const [addedNFTs, setAddedNFTs] = useState<Token[]>([])
 
   const handleBack = () => {
     navigate(-1)

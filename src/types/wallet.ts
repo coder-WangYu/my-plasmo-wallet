@@ -12,6 +12,7 @@ export interface Network {
   chainId: number
   symbol: string
   blockExplorerUrl?: string
+  isMainnet?: boolean
 }
 
 export interface Token {
@@ -40,20 +41,22 @@ export interface WalletState {
 // 默认网络
 export const DEFAULT_NETWORKS: Network[] = [
   {
-    id: 'mainnet',
+    id: 'sepolia',
     name: 'Ethereum Sepolia Testnet',
     rpcUrl: 'https://sepolia.infura.io/v3/bd53db44b045458e827701c6bc02a161',
     chainId: 11155111,
     symbol: 'ETH',
     blockExplorerUrl: 'https://sepolia.etherscan.io',
+    isMainnet: false,
   },
   {
-    id: 'sepolia',
+    id: 'mainnet',
     name: 'Ethereum Mainnet',
     rpcUrl: 'https://mainnet.infura.io/v3/bd53db44b045458e827701c6bc02a161',
     chainId: 11155111,
     symbol: 'ETH',
     blockExplorerUrl: 'https://sepolia.etherscan.io',
+    isMainnet: true,
   },
 ];
 

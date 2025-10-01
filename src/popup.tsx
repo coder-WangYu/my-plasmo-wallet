@@ -14,6 +14,8 @@ import TokenManager from "./components/tokenManager"
 import ViewHistory from "./components/viewHistory"
 import WalletManager from "./components/walletManager"
 import Index from "./pages/index"
+import Home from "~pages/home"
+import Login from "~pages/login"
 
 function IndexPopup() {
   return (
@@ -22,6 +24,8 @@ function IndexPopup() {
         <MemoryRouter initialEntries={["/"]}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/search" element={<Search />} />
             <Route path="/network-manager" element={<NetworkManager />} />
             <Route path="/wallet-manager" element={<WalletManager />} />

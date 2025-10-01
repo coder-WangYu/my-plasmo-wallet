@@ -1,9 +1,18 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+
 import "../style.css"
+
+import { useWalletStore } from "~store"
+import { DEFAULT_NETWORKS } from "~types/wallet"
+import { useLoading } from "~contexts/LoadingContext"
+import { useMessage } from "~contexts/MessageContext"
 
 const NetworkManager = () => {
   const navigate = useNavigate()
+  const { setLoading } = useLoading()
+  const { success, error } = useMessage()
+  const { currentNetwork, switchNetwork } = useWalletStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("主网络")
 
@@ -12,73 +21,36 @@ const NetworkManager = () => {
   }
 
   const handleAddNetwork = () => {
-    console.log("添加自定义网络")
+    // TODO: 添加自定义网络
   }
 
-  const networks = [
-    {
-      name: "Ethereum",
-      icon: "💎",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "0G Chain",
-      icon: "🟣",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "PLAYA3ULL GAMES",
-      icon: "🟢",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "Abstract",
-      icon: "🟢",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "Acala",
-      icon: "🩷",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "Endurance Smart Chain",
-      icon: "🟠",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "AlienX",
-      icon: "👽",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "BSC",
-      icon: "🟡",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "Polygon",
-      icon: "🟣",
-      tag: "EVM",
-      isMainnet: true
-    },
-    {
-      name: "Arbitrum",
-      icon: "🔵",
-      tag: "EVM",
-      isMainnet: true
-    }
-  ]
+  const handleNetworkSelected = async (networkName: string) => {
+    if (!currentNetwork) return
 
-  const filteredNetworks = networks.filter(network =>
+    setLoading(true, "切换网络中...")
+    try {
+      await switchNetwork(networkName)
+      navigate("/home")
+    } catch {
+      error("切换网络失败")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const mainnetNetworks = DEFAULT_NETWORKS.filter(
+    (network) => network.isMainnet
+  )
+  const testnetNetworks = DEFAULT_NETWORKS.filter(
+    (network) => !network.isMainnet
+  )
+
+  // 根据当前 tab 选择对应的网络列表
+  const currentNetworks =
+    activeTab === "主网络" ? mainnetNetworks : testnetNetworks
+
+  // 根据搜索关键词过滤当前网络列表
+  const filteredNetworks = currentNetworks.filter((network) =>
     network.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -102,7 +74,9 @@ const NetworkManager = () => {
             />
           </svg>
         </button>
-        <h1 className="flex-1 text-center text-lg font-semibold text-gray-800">选择网络</h1>
+        <h1 className="flex-1 text-center text-lg font-semibold text-gray-800">
+          网络管理
+        </h1>
         <div className="w-8"></div>
       </div>
 
@@ -138,16 +112,13 @@ const NetworkManager = () => {
         <div className="flex space-x-6 border-b border-gray-100">
           {[
             { name: "主网络", isActive: true },
-            { name: "测试网络", isActive: false },
-            { name: "自定义网络", isActive: false }
+            { name: "测试网络", isActive: false }
           ].map((tab) => (
             <button
               key={tab.name}
               onClick={() => setActiveTab(tab.name)}
               className={`pb-2 text-sm font-medium relative ${
-                activeTab === tab.name
-                  ? "text-blue-600"
-                  : "text-gray-500"
+                activeTab === tab.name ? "text-blue-600" : "text-gray-500"
               }`}>
               {tab.name}
               {activeTab === tab.name && (
@@ -158,53 +129,43 @@ const NetworkManager = () => {
         </div>
       </div>
 
-      {/* 全部网络标题 */}
-      <div className="px-4 py-3 bg-blue-50">
-        <div className="flex items-center space-x-2">
-          <svg
-            className="w-5 h-5 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"
-            />
-          </svg>
-          <span className="text-sm font-medium text-blue-600">
-            全部网络({filteredNetworks.length})
-          </span>
-        </div>
-      </div>
-
       {/* 网络列表 */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-2">
-          {filteredNetworks.map((network, index) => (
+          {filteredNetworks.map((network, index) => {
+            const isCurrentNetwork = currentNetwork?.name === network.name
+            return (
             <div
+              onClick={isCurrentNetwork ? undefined : () => handleNetworkSelected(network.name)}
               key={index}
-              className="flex items-center justify-between py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors">
+              className={`flex items-center justify-between py-3 border-b border-gray-100 transition-colors ${
+                isCurrentNetwork 
+                  ? 'cursor-default bg-blue-50' 
+                  : 'cursor-pointer hover:bg-gray-50'
+              }`}>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                  {network.icon}
+                  🟡
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-800">{network.name}</span>
-                    <span className="px-2 py-0.5 bg-gray-100 text-xs text-gray-600 rounded-full">
-                      {network.tag}
-                    </span>
+                  <div className="font-medium text-gray-800 mb-1">
+                    {network.name}
+                  </div>
+                  <div className="font-medium text-gray-800 mb-1">
+                    {network.chainId}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center">
-                {network.isMainnet && (
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+              <div className="flex items-center space-x-2">
+                {isCurrentNetwork && (
+                  <div className="text-xs text-blue-600 font-medium">
+                    当前网络
+                  </div>
                 )}
                 <svg
-                  className="w-5 h-5 text-gray-400"
+                  className={`w-5 h-5 ${
+                    isCurrentNetwork ? 'text-blue-400' : 'text-gray-400'
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24">
@@ -217,8 +178,30 @@ const NetworkManager = () => {
                 </svg>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
+      </div>
+
+      {/* 底部按钮 */}
+      <div className="px-4 py-4 border-t border-gray-100">
+        <button
+          onClick={handleAddNetwork}
+          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          <span>添加自定义网络</span>
+        </button>
       </div>
     </div>
   )
