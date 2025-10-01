@@ -17,10 +17,13 @@ const Login = () => {
   const handleUnlock = async () => {
     if (!currentAccount) return
 
+    setLoading(true, "解锁中...")
     try {
       await unlockWallet(password)
     } catch {
       error("解锁失败，请检查密码！")
+    } finally {
+      setLoading(false)
     }
   }
 

@@ -51,7 +51,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({
             backgroundImage: `url(${iconUrl})`,
             backgroundPosition: "center 20%",
             backgroundRepeat: "no-repeat",
-            backgroundSize: "180px 180px",
+            backgroundSize: "160px 160px",
             opacity: 1
           }}>
           <div className="flex flex-col items-center gap-6 p-8 mt-40">
