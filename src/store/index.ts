@@ -32,6 +32,8 @@ interface walletStore extends WalletState {
     name?: string
   ) => Promise<WalletAccount>
   getProvider: () => ethers.JsonRpcProvider | null
+  lockWallet: () => void
+  unlockWallet: (password: string) => void
 }
 
 export const useWalletStore = create<walletStore>()(
@@ -171,6 +173,21 @@ export const useWalletStore = create<walletStore>()(
           return null
         }
       },
+
+      // 锁定钱包
+      lockWallet: () => {
+        set({ isLocked: true })
+      },
+
+      // 解锁钱包
+      unlockWallet: (password: string) => {
+        const state = get()
+        const hashedPassword = SHA256(password).toString()
+        if (state.password !== hashedPassword) {
+          throw new Error("Invalid password")
+        }
+        set({ isLocked: false })
+      }
     }),
     {
       name: "wallet"

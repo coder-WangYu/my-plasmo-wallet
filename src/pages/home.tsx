@@ -6,10 +6,12 @@ import "../style.css"
 import { useMessage } from "~contexts/MessageContext"
 import { useWalletStore } from "~store"
 import { useGetBalance } from "~hooks/useGetBalance"
+import { useLoading } from "~contexts/LoadingContext"
 
 const Index = () => {
   const navigate = useNavigate()
-  const { isValidPassword, currentAccount, mnemonic } = useWalletStore()
+  const { setLoading } = useLoading()
+  const { lockWallet, isValidPassword, currentAccount, mnemonic } = useWalletStore()
   const { error, warning } = useMessage()
   const { ethBalance } = useGetBalance()
   const [activeTab, setActiveTab] = useState("代币")
@@ -114,6 +116,17 @@ const Index = () => {
 
   const handleCloseMoreDrawer = () => {
     setShowMoreDrawer(false)
+  }
+
+  const handleLockWallet = async () => {
+    setLoading(true, "锁定中...")
+    try {
+      await lockWallet()
+    } catch {
+      error("锁定失败，请重试")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleAccountDetailClick = (action: string) => {
@@ -390,6 +403,23 @@ const Index = () => {
               </div>
             )}
           </div>
+          <button
+            onClick={() => handleLockWallet()}
+            className="p-1 rounded hover:bg-gray-100 transition-colors"
+            title="锁定钱包">
+            <svg
+              className="w-5 h-5 text-gray-500 hover:text-blue-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </button>
         </div>
       </div>
 

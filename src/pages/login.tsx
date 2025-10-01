@@ -3,10 +3,26 @@ import { useState } from "react"
 import "../style.css"
 
 import iconUrl from "../../assets/icon.png"
+import { useWalletStore } from "~store"
+import { useLoading } from "~contexts/LoadingContext"
+import { useMessage } from "~contexts/MessageContext"
 
 const Login = () => {
+  const { setLoading } = useLoading()
+  const { error } = useMessage()
+  const { unlockWallet, currentAccount } = useWalletStore()
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+
+  const handleUnlock = async () => {
+    if (!currentAccount) return
+
+    try {
+      await unlockWallet(password)
+    } catch {
+      error("解锁失败，请检查密码！")
+    }
+  }
 
   return (
     <div className="w-[400px] h-[600px] bg-white flex flex-col items-center justify-center p-6">
@@ -75,7 +91,14 @@ const Login = () => {
       </div>
 
       {/* Unlock Button */}
-      <button className="w-full bg-gray-200 text-gray-600 py-2.5 rounded-lg font-medium hover:bg-gray-300 transition-colors duration-200 mb-3 text-sm">
+      <button
+        onClick={() => handleUnlock()}
+        disabled={password.length < 8}
+        className={`w-full py-2.5 rounded-lg font-medium transition-colors duration-200 mb-3 text-sm ${
+          password.length >= 8
+            ? "bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+            : "bg-gray-200 text-gray-600 cursor-not-allowed"
+        }`}>
         解锁
       </button>
 
