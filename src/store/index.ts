@@ -8,6 +8,16 @@ import type { Token, WalletAccount } from "~types/wallet"
 
 import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
+// 默认ETH代币
+const defaultETHToken: Token = {
+  address: "0x0000000000000000000000000000000000000000", // ETH的零地址
+  symbol: "ETH",
+  name: "Ethereum",
+  decimals: 18,
+  type: "ETH",
+  balance: "0.00"
+}
+
 const initialState: WalletState = {
   isLocked: false,
   isConnected: false,
@@ -17,7 +27,7 @@ const initialState: WalletState = {
   password: null,
   currentNetwork: DEFAULT_NETWORKS[0],
   networks: DEFAULT_NETWORKS,
-  tokens: []
+  tokens: [defaultETHToken] // 默认包含ETH代币
 }
 
 interface walletStore extends WalletState {
@@ -38,6 +48,7 @@ interface walletStore extends WalletState {
   addToken: (token: Token) => void
   removeToken: (address: string) => void
   updateTokenBalance: (address: string, balance: string) => void
+  ensureETHToken: () => void
 }
 
 export const useWalletStore = create<walletStore>()(
@@ -214,6 +225,10 @@ export const useWalletStore = create<walletStore>()(
 
       // 删除代币
       removeToken: (address: string) => {
+        // 不允许删除默认的ETH代币
+        if (address === "0x0000000000000000000000000000000000000000") {
+          return
+        }
         set((state) => ({
           tokens: state.tokens.filter((token) => token.address !== address)
         }))
@@ -227,9 +242,38 @@ export const useWalletStore = create<walletStore>()(
           )
         }))
       },
+
+      // 确保ETH代币存在
+      ensureETHToken: () => {
+        set((state) => {
+          const hasETHToken = state.tokens.some(
+            (token) => token.address === "0x0000000000000000000000000000000000000000"
+          )
+          
+          if (!hasETHToken) {
+            return {
+              tokens: [defaultETHToken, ...state.tokens]
+            }
+          }
+          
+          return state
+        })
+      },
     }),
     {
-      name: "wallet"
+      name: "wallet",
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // 确保ETH代币始终存在
+          const hasETHToken = state.tokens.some(
+            (token) => token.address === "0x0000000000000000000000000000000000000000"
+          )
+          
+          if (!hasETHToken) {
+            state.tokens.unshift(defaultETHToken)
+          }
+        }
+      }
     }
   )
 )

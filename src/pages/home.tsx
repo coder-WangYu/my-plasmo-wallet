@@ -37,15 +37,13 @@ const Index = () => {
   const [addedNFTs, setAddedNFTs] = useState<Token[]>([])
   const settingsDropdownRef = useRef<HTMLDivElement>(null)
 
-  const walletAddress = "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
-
   const handleCopyAddress = async () => {
     try {
-      await navigator.clipboard.writeText(walletAddress)
+      await navigator.clipboard.writeText(currentAccount.address)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error("复制失败:", err)
+      error("复制失败:", err)
     }
   }
 
@@ -191,7 +189,8 @@ const Index = () => {
   }, [showSettingsDropdown])
 
   useEffect(() => {
-    setAddedTokens(tokens.filter((token) => token.type === "ERC20"))
+    console.log(tokens)
+    setAddedTokens(tokens.filter((token) => token.type === "ERC20" || token.type === "ETH"))
     setAddedNFTs(tokens.filter((token) => token.type === "ERC721"))
 
     // 只在初始化时调用 getAllTokenBalance
@@ -457,6 +456,7 @@ const Index = () => {
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-500">{token.balance}</div>
+                <div className="text-sm text-gray-500">{token.symbol}</div>
               </div>
             </div>
           ))

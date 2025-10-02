@@ -3,10 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 
 import "../style.css"
 
-import { useWalletStore } from "~store"
-import type { Token } from "~types/wallet"
-import { useGetBalance } from "~hooks/useGetBalance"
 import { useMessage } from "~contexts/MessageContext"
+import { useGetBalance } from "~hooks/useGetBalance"
+import { useWalletStore } from "~store"
 
 const SendTokenDetail = () => {
   const navigate = useNavigate()
@@ -28,6 +27,14 @@ const SendTokenDetail = () => {
 
   const handleSend = () => {
     if (Number(ethBalance) < gasFee) {
+      return warning("ETH余额不足以支付Gas费用，请先充值")
+    }
+
+    if (
+      tokenName === "Ethereum" &&
+      (Number(amount) >= Number(ethBalance) ||
+        Number(amount) >= Number(ethBalance) + gasFee)
+    ) {
       return warning("ETH余额不足以支付Gas费用，请先充值")
     }
     // TODO: 实现发送逻辑

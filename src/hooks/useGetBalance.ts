@@ -23,7 +23,11 @@ export const useGetBalance = () => {
       if (!provider) return
 
       const balance = await provider.getBalance(currentAccount.address)
-      setEthBalance(Number(ethers.formatEther(balance)).toFixed(4))
+      const formattedBalance = Number(ethers.formatEther(balance)).toFixed(4)
+      setEthBalance(formattedBalance)
+      
+      // 同时更新store中的ETH代币余额
+      updateTokenBalance("0x0000000000000000000000000000000000000000", formattedBalance)
     } catch {
       error("查询ETH失败...")
     } finally {

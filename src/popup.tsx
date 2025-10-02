@@ -1,7 +1,9 @@
+import { useEffect } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 
 import { LoadingProvider } from "~contexts/LoadingContext"
 import { MessageProvider } from "~contexts/MessageContext"
+import { useWalletStore } from "~store"
 
 import AddToken from "./components/addToken"
 import NetworkManager from "./components/networkManager"
@@ -19,6 +21,13 @@ import Home from "~pages/home"
 import Login from "~pages/login"
 
 function IndexPopup() {
+  const { ensureETHToken } = useWalletStore()
+
+  // 确保ETH代币始终存在
+  useEffect(() => {
+    ensureETHToken()
+  }, [ensureETHToken])
+
   return (
     <LoadingProvider>
       <MessageProvider>

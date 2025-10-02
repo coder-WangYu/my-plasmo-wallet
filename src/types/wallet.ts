@@ -20,7 +20,7 @@ export interface Token {
   symbol: string
   name: string
   decimals: number
-  type: "ERC20" | "ERC721" | "ERC1155"
+  type: "ERC20" | "ERC721" | "ERC1155" | "ETH"
   balance?: string
   tokenId?: string
   image?: string
