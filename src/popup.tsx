@@ -9,6 +9,7 @@ import ReceiveToken from "./components/receiveToken"
 import SaveMnemonic from "./components/saveMnemonic"
 import Search from "./components/search"
 import SendToken from "./components/sendToken"
+import SendTokenDetail from "./components/sendTokenDetail"
 import SwapToken from "./components/swapToken"
 import TokenManager from "./components/tokenManager"
 import ViewHistory from "./components/viewHistory"
@@ -32,6 +33,7 @@ function IndexPopup() {
             <Route path="/token-manager" element={<TokenManager />} />
             <Route path="/add-token" element={<AddToken />} />
             <Route path="/send-token" element={<SendToken />} />
+            <Route path="/send-token-detail" element={<SendTokenDetail />} />
             <Route path="/receive-token" element={<ReceiveToken />} />
             <Route path="/swap-token" element={<SwapToken />} />
             <Route path="/view-history" element={<ViewHistory />} />

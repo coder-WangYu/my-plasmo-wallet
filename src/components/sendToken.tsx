@@ -1,9 +1,12 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+
 import "../style.css"
+import { useWalletStore } from "~store"
 
 const SendToken = () => {
   const navigate = useNavigate()
+  const { tokens } = useWalletStore()
   const [searchQuery, setSearchQuery] = useState("")
 
   const handleBack = () => {
@@ -11,48 +14,13 @@ const SendToken = () => {
   }
 
   const handleTokenSelect = (tokenName: string) => {
-    console.log(`选择代币: ${tokenName}`)
-    // TODO: 跳转到发送详情页面
+    navigate(`/send-token-detail?tokenName=${tokenName}`)
   }
 
-  const tokens = [
-    {
-      name: "OCB",
-      fullName: "OneCoinBuy",
-      icon: "🟣",
-      amount: "40.93",
-      value: "$110.25",
-      hasBitcoinOverlay: true
-    },
-    {
-      name: "USDT",
-      fullName: "Tether USD",
-      icon: "🟢",
-      amount: "0",
-      value: "$0.00",
-      hasBitcoinOverlay: true
-    },
-    {
-      name: "ETH",
-      fullName: "Ethereum",
-      icon: "🔵",
-      amount: "0",
-      value: "$0.00",
-      hasBitcoinOverlay: true
-    },
-    {
-      name: "BNB",
-      fullName: "BNB",
-      icon: "🟡",
-      amount: "0",
-      value: "$0.00",
-      hasBitcoinOverlay: true
-    }
-  ]
-
-  const filteredTokens = tokens.filter(token =>
-    token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    token.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTokens = tokens.filter(
+    (token) =>
+      token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      token.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -117,22 +85,17 @@ const SendToken = () => {
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                    {token.icon}
+                  🔵
                   </div>
-                  {token.hasBitcoinOverlay && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <span className="text-xs">₿</span>
-                    </div>
-                  )}
                 </div>
                 <div>
-                  <div className="font-medium text-gray-800">{token.name}</div>
-                  <div className="text-sm text-gray-500">{token.fullName}</div>
+                  <div className="font-medium text-gray-800">{token.symbol}</div>
+                  <div className="text-sm text-gray-500">{token.name}</div>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-medium text-gray-800">{token.amount}</div>
-                <div className="text-sm text-gray-500">{token.value}</div>
+                <div className="font-medium text-gray-800">{token.balance}</div>
+                <div className="text-sm text-gray-500">无可用汇率</div>
               </div>
             </div>
           ))}
