@@ -63,15 +63,15 @@ const SendTokenDetail = () => {
           gasPrice: ethers.parseUnits("20", "gwei")
         })
       } else if (currentToken.type === "ERC20") {
-        const contract = new ethers.Contract(
+        const contract = await new ethers.Contract(
           currentToken.address,
           ERC20_ABI,
           wallet
         )
-        // TODO: 这里需要处理小数点的问题
-        // const amount = ethers.parseUnits(BigInt(amount), currentToken.decimals);
 
-        tx = await contract.transfer(recipient, amount, {
+        const transferAmount = ethers.parseUnits(amount, currentToken.decimals);
+
+        tx = await contract.transfer(recipient, transferAmount, {
           gasLimit: "60000",
           gasPrice: ethers.parseUnits("20", "gwei")
         })
