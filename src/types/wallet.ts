@@ -37,6 +37,15 @@ export interface Token {
   image?: string
 }
 
+export interface Network {
+  id: string;
+  name: string;
+  rpcUrl: string;
+  chainId: number;
+  symbol: string;
+  blockExplorerUrl?: string;
+}
+
 export interface WalletState {
   isLocked: boolean
   isConnected: boolean
@@ -67,9 +76,19 @@ export const DEFAULT_NETWORKS: Network[] = [
     rpcUrl: 'https://mainnet.infura.io/v3/bd53db44b045458e827701c6bc02a161',
     chainId: 11155111,
     symbol: 'ETH',
-    blockExplorerUrl: 'https://sepolia.etherscan.io',
+    blockExplorerUrl: 'https://etherscan.io',
     isMainnet: true,
   },
+  // TODO: 添加 Hoodi 网络
+  // {
+  //   id: 'hoodi',
+  //   name: 'Ethereum Hoodi',
+  //   rpcUrl: 'https://hoodi.infura.io/v3/bd53db44b045458e827701c6bc02a161',
+  //   chainId: 398501,
+  //   symbol: 'ETH',
+  //   blockExplorerUrl: 'https://hoodi.etherscan.io',
+  //   isMainnet: false,
+  // }
 ];
 
 export const ERC20_ABI = [

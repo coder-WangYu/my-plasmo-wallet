@@ -1,10 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import "../style.css"
 
 import { useWalletStore } from "~store"
-import { DEFAULT_NETWORKS } from "~types/wallet"
 import { useLoading } from "~contexts/LoadingContext"
 import { useMessage } from "~contexts/MessageContext"
 
@@ -12,16 +11,17 @@ const NetworkManager = () => {
   const navigate = useNavigate()
   const { setLoading } = useLoading()
   const { success, error } = useMessage()
-  const { currentNetwork, switchNetwork } = useWalletStore()
+  const { networks, currentNetwork, switchNetwork } = useWalletStore()
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("主网络")
+  const [isMainnetExpanded, setIsMainnetExpanded] = useState(true)
+  const [isTestnetExpanded, setIsTestnetExpanded] = useState(true)
 
   const handleBack = () => {
     navigate(-1)
   }
 
   const handleAddNetwork = () => {
-    // TODO: 添加自定义网络
+    navigate("/add-network")
   }
 
   const handleNetworkSelected = async (networkName: string) => {
@@ -38,21 +38,24 @@ const NetworkManager = () => {
     }
   }
 
-  const mainnetNetworks = DEFAULT_NETWORKS.filter(
+  const mainnetNetworks = networks.filter(
     (network) => network.isMainnet
   )
-  const testnetNetworks = DEFAULT_NETWORKS.filter(
+  const testnetNetworks = networks.filter(
     (network) => !network.isMainnet
   )
 
-  // 根据当前 tab 选择对应的网络列表
-  const currentNetworks =
-    activeTab === "主网络" ? mainnetNetworks : testnetNetworks
-
-  // 根据搜索关键词过滤当前网络列表
-  const filteredNetworks = currentNetworks.filter((network) =>
+  // 根据搜索关键词过滤网络列表
+  const filteredMainnetNetworks = mainnetNetworks.filter((network) =>
     network.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+  const filteredTestnetNetworks = testnetNetworks.filter((network) =>
+    network.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  useEffect(() => {
+    console.log(networks)
+  }, [networks])
 
   return (
     <div className="w-[400px] h-[600px] bg-white flex flex-col">
@@ -107,79 +110,162 @@ const NetworkManager = () => {
         </div>
       </div>
 
-      {/* 标签页 */}
-      <div className="px-4 pb-2">
-        <div className="flex space-x-6 border-b border-gray-100">
-          {[
-            { name: "主网络", isActive: true },
-            { name: "测试网络", isActive: false }
-          ].map((tab) => (
-            <button
-              key={tab.name}
-              onClick={() => setActiveTab(tab.name)}
-              className={`pb-2 text-sm font-medium relative ${
-                activeTab === tab.name ? "text-blue-600" : "text-gray-500"
-              }`}>
-              {tab.name}
-              {activeTab === tab.name && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></div>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* 网络列表 */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-2">
-          {filteredNetworks.map((network, index) => {
-            const isCurrentNetwork = currentNetwork?.name === network.name
-            return (
-            <div
-              onClick={isCurrentNetwork ? undefined : () => handleNetworkSelected(network.name)}
-              key={index}
-              className={`flex items-center justify-between py-3 border-b border-gray-100 transition-colors ${
-                isCurrentNetwork 
-                  ? 'cursor-default bg-blue-50' 
-                  : 'cursor-pointer hover:bg-gray-50'
-              }`}>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                  🟡
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-800 mb-1">
-                    {network.name}
-                  </div>
-                  <div className="font-medium text-gray-800 mb-1">
-                    {network.chainId}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {isCurrentNetwork && (
-                  <div className="text-xs text-blue-600 font-medium">
-                    当前网络
-                  </div>
-                )}
-                <svg
-                  className={`w-5 h-5 ${
-                    isCurrentNetwork ? 'text-blue-400' : 'text-gray-400'
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
+          {/* 主网络 */}
+          <div className="mb-4">
+            <div 
+              className="flex items-center justify-between py-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+              onClick={() => setIsMainnetExpanded(!isMainnetExpanded)}
+            >
+              <h3 className="text-sm font-medium text-gray-800">主网络</h3>
+              <svg
+                className={`w-4 h-4 text-gray-500 transition-transform ${
+                  isMainnetExpanded ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
             </div>
-            )
-          })}
+            
+            {isMainnetExpanded && (
+              <div className="space-y-1">
+                {filteredMainnetNetworks.map((network, index) => {
+                  const isCurrentNetwork = currentNetwork?.name === network.name
+                  return (
+                    <div
+                      onClick={isCurrentNetwork ? undefined : () => handleNetworkSelected(network.name)}
+                      key={`mainnet-${index}`}
+                      className={`flex items-center justify-between py-3 px-3 border-b border-gray-100 transition-colors rounded-lg ${
+                        isCurrentNetwork 
+                          ? 'cursor-default bg-blue-50' 
+                          : 'cursor-pointer hover:bg-gray-50'
+                      }`}>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                          🟡
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">
+                            {network.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {network.chainId}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {isCurrentNetwork && (
+                          <div className="text-xs text-blue-600 font-medium">
+                            当前网络
+                          </div>
+                        )}
+                        <svg
+                          className={`w-5 h-5 ${
+                            isCurrentNetwork ? 'text-blue-400' : 'text-gray-400'
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 测试网络 */}
+          <div>
+            <div 
+              className="flex items-center justify-between py-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+              onClick={() => setIsTestnetExpanded(!isTestnetExpanded)}
+            >
+              <h3 className="text-sm font-medium text-gray-800">测试网络</h3>
+              <svg
+                className={`w-4 h-4 text-gray-500 transition-transform ${
+                  isTestnetExpanded ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+            
+            {isTestnetExpanded && (
+              <div className="space-y-1">
+                {filteredTestnetNetworks.map((network, index) => {
+                  const isCurrentNetwork = currentNetwork?.name === network.name
+                  return (
+                    <div
+                      onClick={isCurrentNetwork ? undefined : () => handleNetworkSelected(network.name)}
+                      key={`testnet-${index}`}
+                      className={`flex items-center justify-between py-3 px-3 border-b border-gray-100 transition-colors rounded-lg ${
+                        isCurrentNetwork 
+                          ? 'cursor-default bg-blue-50' 
+                          : 'cursor-pointer hover:bg-gray-50'
+                      }`}>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                          🟡
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800">
+                            {network.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {network.chainId}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {isCurrentNetwork && (
+                          <div className="text-xs text-blue-600 font-medium">
+                            当前网络
+                          </div>
+                        )}
+                        <svg
+                          className={`w-5 h-5 ${
+                            isCurrentNetwork ? 'text-blue-400' : 'text-gray-400'
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

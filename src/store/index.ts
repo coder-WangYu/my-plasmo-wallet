@@ -4,7 +4,12 @@ import { ethers } from "ethers"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-import type { Token, TransactionHistory, WalletAccount } from "~types/wallet"
+import type {
+  Network,
+  Token,
+  TransactionHistory,
+  WalletAccount
+} from "~types/wallet"
 
 import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
@@ -52,6 +57,8 @@ interface walletStore extends WalletState {
   updateTokenBalance: (address: string, balance: string) => void
   updateTransactionHistory: (transactionHistory: TransactionHistory) => void
   ensureETHToken: () => void
+  addNetwork: (network: Network) => void
+  ensureNetworks: () => void
 }
 
 export const useWalletStore = create<walletStore>()(
@@ -219,6 +226,18 @@ export const useWalletStore = create<walletStore>()(
         set({ isLocked: false })
       },
 
+      // 添加自定义网络
+      addNetwork: (network: Network) => {
+        set((state) => {
+          const newNetwork = {
+            ...network
+          }
+          return {
+            networks: [...state.networks, newNetwork]
+          }
+        })
+      },
+
       // 切换网络
       switchNetwork: (networkName: string) => {
         const state = get()
@@ -228,6 +247,19 @@ export const useWalletStore = create<walletStore>()(
         if (network) {
           set({ currentNetwork: network })
         }
+      },
+
+      // 确保默认网络存在
+      ensureNetworks: () => {
+        set((state) => {
+          if (!state.networks.length) {
+            return {
+              networks: [...DEFAULT_NETWORKS]
+            }
+          }
+
+          return state
+        })
       },
 
       // 添加代币
@@ -260,13 +292,6 @@ export const useWalletStore = create<walletStore>()(
         }))
       },
 
-      // 更新交易历史
-      updateTransactionHistory: (transactionHistory: TransactionHistory) => {
-        set((state) => ({
-          transactionHistory: [...state.transactionHistory, transactionHistory]
-        }))
-      },
-
       // 确保ETH代币存在
       ensureETHToken: () => {
         set((state) => {
@@ -283,10 +308,17 @@ export const useWalletStore = create<walletStore>()(
 
           return state
         })
+      },
+
+      // 更新交易历史
+      updateTransactionHistory: (transactionHistory: TransactionHistory) => {
+        set((state) => ({
+          transactionHistory: [...state.transactionHistory, transactionHistory]
+        }))
       }
     }),
     {
-      name: "wallet",
+      name: "walletStore",
       onRehydrateStorage: () => (state) => {
         if (state) {
           // 确保ETH代币始终存在
@@ -297,6 +329,11 @@ export const useWalletStore = create<walletStore>()(
 
           if (!hasETHToken) {
             state.tokens.unshift(defaultETHToken)
+          }
+
+          // 确保默认网络始终存在
+          if (!state.networks.length) {
+            state.networks.unshift(...DEFAULT_NETWORKS)
           }
         }
       }

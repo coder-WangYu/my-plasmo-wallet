@@ -5,6 +5,7 @@ import { LoadingProvider } from "~contexts/LoadingContext"
 import { MessageProvider } from "~contexts/MessageContext"
 import { useWalletStore } from "~store"
 
+import AddNetwork from "./components/addNetwork"
 import AddToken from "./components/addToken"
 import NetworkManager from "./components/networkManager"
 import ReceiveToken from "./components/receiveToken"
@@ -21,12 +22,17 @@ import Home from "~pages/home"
 import Login from "~pages/login"
 
 function IndexPopup() {
-  const { ensureETHToken } = useWalletStore()
+  const { ensureETHToken, ensureNetworks } = useWalletStore()
 
   // 确保ETH代币始终存在
   useEffect(() => {
     ensureETHToken()
   }, [ensureETHToken])
+
+  // 确保默认网络始终存在
+  useEffect(() => {
+    ensureNetworks()
+  }, [ensureNetworks])
 
   return (
     <LoadingProvider>
@@ -38,6 +44,7 @@ function IndexPopup() {
             <Route path="/login" element={<Login />} />
             <Route path="/search" element={<Search />} />
             <Route path="/network-manager" element={<NetworkManager />} />
+            <Route path="/add-network" element={<AddNetwork />} />
             <Route path="/wallet-manager" element={<WalletManager />} />
             <Route path="/token-manager" element={<TokenManager />} />
             <Route path="/add-token" element={<AddToken />} />

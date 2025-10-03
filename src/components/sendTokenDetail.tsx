@@ -56,6 +56,7 @@ const SendTokenDetail = () => {
     setLoading(true, "正在发送交易...")
     try {
       if (currentToken.type === "ETH") {
+        // 原生代币转账
         tx = await wallet.sendTransaction({
           to: recipient,
           value: ethers.parseEther(amount),
@@ -63,6 +64,7 @@ const SendTokenDetail = () => {
           gasPrice: ethers.parseUnits("20", "gwei")
         })
       } else if (currentToken.type === "ERC20") {
+        // ERC20代币转账
         const contract = await new ethers.Contract(
           currentToken.address,
           ERC20_ABI,
@@ -76,11 +78,13 @@ const SendTokenDetail = () => {
           gasPrice: ethers.parseUnits("20", "gwei")
         })
       } else if (currentToken.type === "ERC721") {
+        // ERC721代币转账
       } else {
-        // ERC1155
+        // ERC1155代币转账
       }
 
       // 等待交易完成
+      setLoading(true, "等待交易完成...")
       await tx.wait()
 
        // 跳转到首页
