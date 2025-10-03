@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 
 import "../style.css"
 
@@ -8,20 +8,24 @@ import { useMessage } from "~contexts/MessageContext"
 import { useGetBalance } from "~hooks/useGetBalance"
 import { useWalletStore } from "~store"
 import type { Token } from "~types/wallet"
+import dayjs from "dayjs"
 
 const Index = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { setLoading } = useLoading()
   const {
     lockWallet,
     isValidPassword,
+    updateTransactionHistory,
+    transactionHistory,
     currentAccount,
     currentNetwork,
     mnemonic,
     tokens
   } = useWalletStore()
-  const { error, warning } = useMessage()
-  const { ethBalance, getAllTokenBalance } = useGetBalance()
+  const { error, warning, success } = useMessage()
+  const { ethBalance, refreshBalance, getAllTokenBalance } = useGetBalance()
   const [activeTab, setActiveTab] = useState("代币")
   const [copied, setCopied] = useState(false)
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false)
@@ -36,6 +40,7 @@ const Index = () => {
   const [addedTokens, setAddedTokens] = useState<Token[]>([])
   const [addedNFTs, setAddedNFTs] = useState<Token[]>([])
   const settingsDropdownRef = useRef<HTMLDivElement>(null)
+  const processedTransactions = useRef<Set<string>>(new Set())
 
   const handleCopyAddress = async () => {
     try {
@@ -168,6 +173,55 @@ const Index = () => {
     }
   }
 
+  const dealWithTransaction = async (
+    type: string,
+    tx: any,
+    amount: string,
+    tokenName: string
+  ) => {
+    if (tx && tx.hash) {
+      // 使用ref防止重复处理
+      if (processedTransactions.current.has(tx.hash)) {
+        console.log("交易已处理过，跳过重复处理:", tx.hash)
+        return
+      }
+
+      // 检查是否已存在相同hash的交易记录
+      const existingTransaction = transactionHistory.find(
+        (record) => record.id === tx.hash
+      )
+      
+      if (existingTransaction) {
+        console.log("交易记录已存在，跳过重复添加:", tx.hash)
+        processedTransactions.current.add(tx.hash)
+        return
+      }
+
+      console.log("添加新交易记录:", tx.hash)
+      processedTransactions.current.add(tx.hash)
+      success(`成功发送 ${amount} ${tokenName}`)
+
+      const transactionRecord = {
+        id: tx.hash,
+        type,
+        status: "已确认",
+        tokenName,
+        from: tx.from,
+        to: tx.to,
+        amount,
+        date: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss")
+      }
+
+      updateTransactionHistory(transactionRecord)
+    }
+  }
+
+  const handleViewTransaction = (id: string) => {
+    if (!id || !currentNetwork) return
+
+    window.open(`${currentNetwork.blockExplorerUrl}/tx/${id}`, "_blank")
+  }
+
   // 点击外部关闭下拉列表
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,8 +243,9 @@ const Index = () => {
   }, [showSettingsDropdown])
 
   useEffect(() => {
-    console.log(tokens)
-    setAddedTokens(tokens.filter((token) => token.type === "ERC20" || token.type === "ETH"))
+    setAddedTokens(
+      tokens.filter((token) => token.type === "ERC20" || token.type === "ETH")
+    )
     setAddedNFTs(tokens.filter((token) => token.type === "ERC721"))
 
     // 只在初始化时调用 getAllTokenBalance
@@ -199,6 +254,36 @@ const Index = () => {
       setIsInitialized(true)
     }
   }, [tokens])
+
+  // 处理从sendTokenDetail传递的交易参数
+  useEffect(() => {
+    if (location.state && location.state.type && location.state.tx && location.state.tx.hash) {
+      const txHash = location.state.tx.hash
+      
+      // 使用ref防止重复处理
+      if (processedTransactions.current.has(txHash)) {
+        console.log("交易已处理过，跳过重复处理:", txHash)
+        // 清除location.state
+        window.history.replaceState({}, document.title)
+        return
+      }
+
+      console.log("处理交易状态:", location.state)
+      setActiveTab("活动")
+
+      const { type, tx, amount, tokenName } = location.state as {
+        type: string
+        tx: any
+        amount: string
+        tokenName: string
+      }
+
+      dealWithTransaction(type, tx, amount, tokenName)
+
+      // 立即清除location.state，避免重复处理
+      window.history.replaceState({}, document.title)
+    }
+  }, [location.state])
 
   return (
     <div className="w-[400px] h-[600px] bg-white flex flex-col">
@@ -419,7 +504,7 @@ const Index = () => {
       {/* 资产标签页 */}
       <div className="px-6 py-1">
         <div className="flex space-x-6 border-b border-gray-100">
-          {["代币", "NFT", "授权"].map((tab) => (
+          {["代币", "NFT", "活动"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -460,6 +545,62 @@ const Index = () => {
               </div>
             </div>
           ))
+        ) : activeTab === "活动" ? (
+          // 活动页面 - 交易历史
+          <div className="space-y-1">
+            {transactionHistory
+              .sort(
+                (a, b) =>
+                  new Date(b.date).getTime() - new Date(a.date).getTime()
+              )
+              .map((tx, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-3 px-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                  <div className="flex items-center space-x-3">
+                    {/* 交易图标 */}
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-6 h-6 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 11l5-5m0 0l5 5m-5-5v12"
+                          />
+                        </svg>
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs text-white font-bold">S</span>
+                      </div>
+                    </div>
+
+                    {/* 交易信息 */}
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-500">{tx.type}</div>
+                      <div className="text-sm text-green-500">{tx.status}</div>
+                      <div className="text-sm text-gray-500">{tx.date}</div>
+                    </div>
+                  </div>
+
+                  {/* 交易金额 */}
+                  <div className="text-right">
+                    <div className="font-medium text-gray-800">
+                      -{tx.amount} {tx.tokenName}
+                    </div>
+                    <button
+                      className="font-medium text-blue-800 hover:text-blue-600 transition-colors"
+                      onClick={() => handleViewTransaction(tx.id)}>
+                      在浏览器中查看
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full py-20">
             <svg

@@ -15,6 +15,17 @@ export interface Network {
   isMainnet?: boolean
 }
 
+export interface TransactionHistory {
+  id: string
+  type: string
+  status: string
+  amount: string
+  tokenName: string
+  from: string
+  to: string
+  date: string
+}
+
 export interface Token {
   address: string
   symbol: string
@@ -35,7 +46,8 @@ export interface WalletState {
   password: string | null
   currentNetwork: Network
   networks: Network[]
-  tokens: Token[]
+  tokens: Token[],
+  transactionHistory?: TransactionHistory[]
 }
 
 // 默认网络
@@ -64,7 +76,8 @@ export const ERC20_ABI = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function decimals() view returns (uint8)",
-  "function balanceOf(address owner) view returns (uint256)"
+  "function balanceOf(address owner) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)"
 ]
 
 export const ERC721_ABI = [

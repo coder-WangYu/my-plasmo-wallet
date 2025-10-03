@@ -1,10 +1,10 @@
 import * as bip39 from "bip39"
-import { AES, SHA256 } from "crypto-js"
+import CryptoJS, { AES, SHA256 } from "crypto-js"
 import { ethers } from "ethers"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
-import type { Token, WalletAccount } from "~types/wallet"
+import type { Token, TransactionHistory, WalletAccount } from "~types/wallet"
 
 import { DEFAULT_NETWORKS, type WalletState } from "../types/wallet"
 
@@ -27,7 +27,8 @@ const initialState: WalletState = {
   password: null,
   currentNetwork: DEFAULT_NETWORKS[0],
   networks: DEFAULT_NETWORKS,
-  tokens: [defaultETHToken] // 默认包含ETH代币
+  tokens: [defaultETHToken], // 默认包含ETH代币
+  transactionHistory: []
 }
 
 interface walletStore extends WalletState {
@@ -42,12 +43,14 @@ interface walletStore extends WalletState {
     name?: string
   ) => Promise<WalletAccount>
   getProvider: () => ethers.JsonRpcProvider | null
+  getWallet: () => ethers.Wallet | null
   lockWallet: () => void
   unlockWallet: (password: string) => void
   switchNetwork: (networkName: string) => void
   addToken: (token: Token) => void
   removeToken: (address: string) => void
   updateTokenBalance: (address: string, balance: string) => void
+  updateTransactionHistory: (transactionHistory: TransactionHistory) => void
   ensureETHToken: () => void
 }
 
@@ -189,6 +192,18 @@ export const useWalletStore = create<walletStore>()(
         }
       },
 
+      // 创建wallet
+      getWallet: () => {
+        const state = get()
+        const provider = state.getProvider()
+        try {
+          return new ethers.Wallet(state.currentAccount.privateKey, provider)
+        } catch (error) {
+          console.error("Failed to create wallet:", error)
+          return null
+        }
+      },
+
       // 锁定钱包
       lockWallet: () => {
         set({ isLocked: true })
@@ -207,7 +222,9 @@ export const useWalletStore = create<walletStore>()(
       // 切换网络
       switchNetwork: (networkName: string) => {
         const state = get()
-        const network = state.networks.find((network) => network.name === networkName)
+        const network = state.networks.find(
+          (network) => network.name === networkName
+        )
         if (network) {
           set({ currentNetwork: network })
         }
@@ -243,22 +260,30 @@ export const useWalletStore = create<walletStore>()(
         }))
       },
 
+      // 更新交易历史
+      updateTransactionHistory: (transactionHistory: TransactionHistory) => {
+        set((state) => ({
+          transactionHistory: [...state.transactionHistory, transactionHistory]
+        }))
+      },
+
       // 确保ETH代币存在
       ensureETHToken: () => {
         set((state) => {
           const hasETHToken = state.tokens.some(
-            (token) => token.address === "0x0000000000000000000000000000000000000000"
+            (token) =>
+              token.address === "0x0000000000000000000000000000000000000000"
           )
-          
+
           if (!hasETHToken) {
             return {
               tokens: [defaultETHToken, ...state.tokens]
             }
           }
-          
+
           return state
         })
-      },
+      }
     }),
     {
       name: "wallet",
@@ -266,9 +291,10 @@ export const useWalletStore = create<walletStore>()(
         if (state) {
           // 确保ETH代币始终存在
           const hasETHToken = state.tokens.some(
-            (token) => token.address === "0x0000000000000000000000000000000000000000"
+            (token) =>
+              token.address === "0x0000000000000000000000000000000000000000"
           )
-          
+
           if (!hasETHToken) {
             state.tokens.unshift(defaultETHToken)
           }
