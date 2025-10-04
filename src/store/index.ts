@@ -1,5 +1,5 @@
 import * as bip39 from "bip39"
-import CryptoJS, { AES, SHA256 } from "crypto-js"
+import CryptoJS, { AES, SHA256, enc } from "crypto-js"
 import { ethers } from "ethers"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
@@ -315,10 +315,54 @@ export const useWalletStore = create<walletStore>()(
         set((state) => ({
           transactionHistory: [...state.transactionHistory, transactionHistory]
         }))
-      }
+      },
+
+      // 钱包连接
+      // connect: async (): Promise<WalletAccount> => {
+      //   const state = await new Promise<WalletState | null>((resolve) => {
+      //     chrome.storage.local.get("wallet-store", (result) => {
+      //       console.log("钱包信息:", result["wallet-store"])
+      //       resolve(result["wallet-store"]?.state || null)
+      //     })
+      //   })
+
+      //   if (!state || !state.currentAccount) {
+      //     throw new Error("请先在插件中导入账户")
+      //   }
+      //   console.log(state)
+      //   console.log(state.currentAccount)
+
+      //   const account = state.currentAccount as WalletAccount
+      //   set({
+      //     currentAccount: account,
+      //     isConnected: true
+      //   })
+
+      //   return account
+      // },
+
+      // 签名消息
+      // signMessage: async (message) => {
+      //   const { state } = JSON.parse(localStorage.getItem("wallet-store"))
+      //   console.log("钱包信息:", state)
+      //   const account = state.currentAccount
+      //   if (!account) {
+      //     throw new Error("未连接钱包")
+      //   }
+      //   const bytes = AES.decrypt(account.privateKey, state.password)
+      //   const privateKey = bytes.toString(enc.Utf8)
+
+      //   const wallet = new ethers.Wallet(privateKey)
+      //   return wallet.signMessage(message)
+      // },
+
+      // 钱包断开连接
+      // disconnect: () => {
+      //   set({ currentAccount: null, isConnected: false })
+      // }
     }),
     {
-      name: "walletStore",
+      name: "DyWallet",
       onRehydrateStorage: () => (state) => {
         if (state) {
           // 确保ETH代币始终存在
