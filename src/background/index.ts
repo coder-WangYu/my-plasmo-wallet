@@ -2,6 +2,8 @@ import "@plasmohq/messaging/background"
 
 import { startHub } from "@plasmohq/messaging/pub-sub"
 
+import injectMyWallet from "./inject-helper"
+
 // 注入钱包到主世界
 const injectWalletToMainWorld = (tabId: number) => {
   console.log("开始注入到 tabId:", tabId)
@@ -15,39 +17,7 @@ const injectWalletToMainWorld = (tabId: number) => {
     chrome.scripting.executeScript({
       target: { tabId },
       world: "MAIN",
-      func: () => {
-        // 创建简单的钱包对象
-        const testWallet = {
-          name: "DyWallet",
-          version: "1.0.0",
-          isTest: true,
-          isDyWallet: true
-        }
-
-        // 注入到主世界
-        ;(window as any).testWallet = testWallet
-        ;(window as any).mywallet = testWallet
-
-        if ((window as any).ethereum) {
-          const existingProvider = (window as any).ethereum
-          ;(window as any).ethereum = {
-            providers: [existingProvider, testWallet],
-            ...existingProvider
-          }
-        } else {
-          ;(window as any).ethereum = testWallet
-        }
-
-        // 触发事件
-        window.postMessage(
-          {
-            type: "INJECT_WALLET",
-            data: testWallet,
-            requestId: "123"
-          },
-          "*"
-        )
-      }
+      func: injectMyWallet
     })
   } catch (error) {
     console.error("注入失败:", error)
